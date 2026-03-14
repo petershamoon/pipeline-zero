@@ -1,0 +1,76 @@
+name: security-gate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  semgrep-checkov:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Semgrep + Checkov
+        run: |
+          python -m pip install --upgrade pip
+          pip install semgrep checkov
+
+      - name: Run Semgrep
+        run: semgrep --config auto --error --exclude node_modules --exclude .venv .
+
+      - name: Run Checkov
+        run: checkov -d contractflow/infra --framework terraform --quiet
+
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+      - name: Run Gitleaks
+        run: |
+          docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:8.21.2 \
+            detect --source /repo --no-git --verbose
+
+  trivy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+      - name: Run Trivy FS scan
+        run: |
+          docker run --rm -v "$PWD:/src" aquasec/trivy:0.57.1 \
+            fs --scanners vuln,secret,misconfig --severity HIGH,CRITICAL --exit-code 1 /src
+
+  codeql:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    strategy:
+      matrix:
+        language: ["python", "javascript-typescript"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3

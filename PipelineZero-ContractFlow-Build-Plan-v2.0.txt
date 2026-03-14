@@ -1,0 +1,458 @@
+PIPELINEZERO - CONTRACTFLOW BUILD PLAN v2.1
+Last Updated: March 6, 2026
+Purpose: Complete build specification for a secure, demo-ready ContractFlow platform.
+
+====================================================================
+WHAT THIS VERSION CHANGES
+====================================================================
+This v2.1 plan replaces the earlier plan and fixes major architecture,
+security, and CI/CD issues while preserving the original demo story.
+
+Core changes:
+- Moves scheduled jobs out of API startup loops into external jobs.
+- Replaces browser token persistence with secure cookie session model.
+- Requires distributed rate limiting (Redis) for multi-replica consistency.
+- Replaces static Azure credentials with GitHub OIDC federation.
+- Requires all GitHub Actions to be pinned by commit SHA.
+- Adds explicit ownership split: Codex/Claude builds app + CI, Manus owns Azure.
+
+====================================================================
+1) EXECUTIVE SUMMARY
+====================================================================
+Recommended architecture:
+- Modular monolith backend (FastAPI + SQLAlchemy) with explicit domains.
+- React + TypeScript frontend.
+- PostgreSQL as primary datastore.
+- Azure Blob Storage for file versions.
+- Redis for distributed rate limiting and lightweight coordination.
+- Azure Container Apps for services and Azure Container Apps Jobs for cron work.
+- Terraform for all infra.
+
+Why this architecture:
+- Fast enough for delivery and demo timelines.
+- Lower operational overhead than microservices.
+- Strong security controls and better scaling posture than in-process cron.
+
+====================================================================
+2) UPDATED TECHNOLOGY BASELINE
+====================================================================
+Backend API
+- Python 3.12
+- FastAPI (current stable release in lockfile)
+- SQLAlchemy 2.x + Alembic
+
+Validation + Configuration
+- Pydantic v2
+- pydantic-settings (v2 style model config)
+
+Authentication (Preferred)
+- Microsoft Entra ID (OIDC/OAuth2)
+- This is the required production path.
+
+Authentication (Fallback)
+- Local auth with Argon2id password hashing
+- HttpOnly secure cookies for browser session
+- CSRF protection for state-changing requests
+- Fallback is development-only and must be disabled in production.
+
+Frontend
+- React + TypeScript + Vite
+- TanStack Query for server state
+- Zustand for non-sensitive UI state only
+
+Security + Platform
+- Redis for distributed limits and coordination
+- Azure Key Vault + Managed Identity for secrets
+- OpenTelemetry + Azure Monitor + Log Analytics for observability
+- Semgrep + CodeQL + Trivy + Checkov + Gitleaks in CI
+
+====================================================================
+3) REPOSITORY STRUCTURE (v2)
+====================================================================
+contractflow/
+  backend/
+    app/
+      api/v1/
+      core/                 # config, security, middleware
+      models/
+      schemas/
+      services/
+      repositories/
+      workers/              # reusable task logic called by API/jobs
+      telemetry/
+      main.py
+    migrations/
+    tests/
+      unit/
+      integration/
+      security/
+    requirements.txt
+    requirements-dev.txt
+    Dockerfile
+  frontend/
+    src/
+      app/
+      pages/
+      components/
+      hooks/
+      services/
+      store/
+      types/
+      test/
+    package.json
+    vite.config.ts
+    nginx.conf
+    Dockerfile
+  jobs/
+    expiration-job/
+    notification-job/
+  infra/
+    modules/
+    envs/
+      staging/
+      production/
+    main.tf
+  .github/workflows/
+    ci.yml
+    security.yml
+    deploy-staging.yml
+    deploy-production.yml
+    dast.yml
+  semgrep-rules/
+  docs/
+    architecture/
+    runbooks/
+    handoff/
+  docker-compose.yml
+  docker-compose.test.yml
+  README.md
+
+====================================================================
+4) KEY ARCHITECTURE DECISIONS
+====================================================================
+Decision A: Keep a modular monolith
+- Use domain modules: auth, contracts, versions, approvals, admin, audit.
+- Avoid microservices until scale or team structure demands it.
+
+Decision B: Externalize scheduled jobs
+- Use Azure Container Apps Jobs (or Azure Functions Timer) for expiration
+  and notification schedules.
+- Do NOT run perpetual asyncio sleep loops inside API containers.
+- Add idempotency keys and advisory-lock strategy to avoid duplicate runs.
+
+Decision C: Keep API as security boundary
+- UI hides unauthorized actions for UX.
+- API always enforces role and object-level checks.
+
+Decision D: Use Entra ID as production identity provider
+- Production auth MUST use Microsoft Entra ID with OIDC/OAuth2.
+- SPA uses Authorization Code + PKCE flow.
+- Backend validates issuer, audience, signature, expiry, and required claims.
+- App RBAC maps from Entra groups/app roles to internal roles.
+- Local auth path exists only for local development and test fixtures.
+
+====================================================================
+4A) EXECUTION OWNERSHIP MODEL (CRITICAL)
+====================================================================
+This project uses split execution:
+- Codex/Claude owns application code, tests, CI/CD workflows, and IaC stubs.
+- Manus owns Azure provisioning, cloud wiring, and runtime operations in Azure.
+
+Codex/Claude MUST build:
+- backend/, frontend/, jobs/ source code
+- migrations and seed scripts
+- tests (unit/integration/security)
+- .github/workflows (including OIDC-ready deployment workflows)
+- semgrep-rules/ and security config
+- infra module interfaces and variable contracts (without live secret values)
+- all handoff docs under docs/handoff/
+
+Manus MUST own and execute:
+- terraform init/plan/apply against Azure subscriptions
+- Azure resource creation and policy alignment
+- Key Vault secret provisioning and rotation schedules
+- Container Apps environment setup, identities, and networking
+- ACR permissions and image pull/runtime access
+- staging/production release approvals and incident-response runbooks
+
+Boundary rule:
+- Codex/Claude defines the required cloud contract.
+- Manus implements cloud resources to satisfy that contract.
+- If cloud reality requires API/app changes, Manus opens a change request and
+  Codex/Claude updates code/config in a new PR.
+
+Entra ID split:
+- Codex/Claude implements OIDC client/server integration, claim validation,
+  role mapping, and auth tests.
+- Manus configures Entra app registrations, redirect URIs, app roles/groups,
+  federated credentials, and tenant-side policy controls.
+
+====================================================================
+5) SECURITY ARCHITECTURE
+====================================================================
+5.1 Authentication + Sessions
+- Required in production: Entra ID auth code + PKCE for SPA.
+- Fallback: Local email/password with Argon2id hashes.
+- Browser auth state via HttpOnly, Secure, SameSite cookies.
+- Refresh/session tokens hashed server-side and rotated on use.
+- Never persist access or refresh tokens in localStorage/sessionStorage.
+- Production mode rejects startup if Entra config is missing.
+
+5.2 Authorization
+- Role-based checks for capability boundaries.
+- Object-level checks (BOLA prevention) for all contract-scoped routes.
+- Centralize checks in policy/service layer with direct tests.
+
+5.3 Upload Security
+- MIME validation with python-magic from file bytes.
+- Max-size enforcement before persistence.
+- Store SHA-256 checksum.
+- Use scoped, short-lived read-only SAS URLs.
+- Optional but recommended: malware scan stage before marking file available.
+
+5.4 App Hardening
+- CORS allowlist only.
+- Security headers: HSTS, X-Content-Type-Options, Referrer-Policy.
+- Opaque client errors, stack traces only in logs.
+- Distributed rate limits backed by Redis.
+
+====================================================================
+6) DATA MODEL UPDATES
+====================================================================
+Required controls:
+- UUID primary keys.
+- Timezone-aware timestamps.
+- Soft delete for contracts.
+- Check constraints:
+  - end_date >= start_date
+  - value_usd >= 0
+  - renewal_notice_days >= 0
+- Optimistic locking/version field for concurrent updates.
+- Case-insensitive unique email index.
+
+Audit model requirement:
+- Append-only audit entries.
+- Include actor, action, resource type/id, contract id, IP, user-agent,
+  correlation id, metadata payload.
+
+ORM naming fix:
+- Do not use attribute name "metadata" in SQLAlchemy models.
+- Use "metadata_json" field name in ORM layer.
+
+====================================================================
+7) BACKEND BUILD SPEC
+====================================================================
+7.1 Config
+- Use Pydantic v2 settings syntax (SettingsConfigDict).
+- Parse ALLOWED_ORIGINS explicitly from comma-separated or JSON input.
+- Support .env in development only.
+
+7.2 API Standards
+- All endpoints under /api/v1.
+- Standardized error envelope.
+- Pagination with deterministic ordering.
+- Every state-changing endpoint writes an audit event.
+
+7.3 Health + Startup
+- Add /health/live and /health/ready endpoints.
+- Readiness should verify DB and critical dependencies.
+
+7.4 Docker hardening
+- Run as non-root user.
+- Ensure healthcheck command exists in image.
+- Use JSON CMD syntax:
+  CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+7.5 Testing targets
+- Unit tests: services/policies.
+- Integration tests: auth, contracts, approvals, versions.
+- Security tests: unauthorized access and BOLA bypass attempts.
+- Coverage target on new code: minimum 70 percent.
+
+====================================================================
+8) FRONTEND BUILD SPEC
+====================================================================
+8.1 Session strategy
+- Use cookie-based auth.
+- Store only non-sensitive UI state in persisted Zustand state.
+- Use React Query for API caching and invalidation.
+
+8.2 UX + security behavior
+- Role-aware rendering for menus/actions.
+- Handle 401/403 with user-safe flows and re-auth redirect.
+- File extension checks are UX hints; server-side MIME checks are authoritative.
+
+8.3 Nginx container
+- Add explicit /health endpoint returning 200.
+- Keep SPA routing fallback.
+- Cache immutable static assets aggressively.
+
+====================================================================
+9) CI/CD AND SECURITY PIPELINE
+====================================================================
+9.1 Required workflow order
+1. Format + lint
+2. Unit + integration tests
+3. Security scans (Semgrep, CodeQL, Trivy, Gitleaks, Checkov)
+4. Build + SBOM + image signing
+5. Deploy to staging
+6. DAST scan against staging
+7. Manual production approval gate
+
+9.2 GitHub Actions standards
+- Pin third-party actions by full commit SHA.
+- Use least-privilege permissions per job.
+- Use concurrency groups for deployment workflows.
+- Use GitHub OIDC to Azure (no long-lived AZURE_CREDENTIALS secret).
+
+9.2.1 OIDC handoff details for Manus
+- Codex/Claude provides:
+  - expected federated credential subject patterns
+  - required Azure role assignments per environment
+  - workflow environment names and deployment targets
+- Manus configures:
+  - Entra app registration or workload identity federation trust
+  - role assignments at correct scope (RG/subscription)
+  - environment protections and manual approval gates
+
+9.3 Semgrep strategy
+- Keep custom rules for auth dependency, no raw SQL, file MIME validation,
+  hardcoded secret, and open CORS.
+- Add Semgrep rule tests (positive and negative fixtures).
+
+====================================================================
+10) TERRAFORM INFRASTRUCTURE PLAN
+====================================================================
+Ownership:
+- Codex/Claude: writes Terraform module contracts, variable schemas, outputs,
+  and validation rules.
+- Manus: applies Terraform and manages Azure lifecycle.
+
+Resources:
+- Resource Group, VNet/subnets, private DNS as required.
+- Container Apps Environment.
+- Backend and frontend container apps.
+- Container Apps Jobs for scheduled tasks.
+- PostgreSQL Flexible Server with private access.
+- Redis cache for distributed limiter/session support.
+- Blob Storage, Key Vault, ACR (admin disabled).
+- Log Analytics + Azure Monitor alerts.
+
+Environment strategy:
+- Separate staging and production variable files + state isolation.
+- Remote backend with locking.
+- Consistent tagging for environment/owner/cost center/data classification.
+
+Reliability controls:
+- Automated DB backups and tested restore runbook.
+- Alerting for failed jobs, auth anomalies, elevated error rates.
+- Defined RPO/RTO targets.
+
+10.1 Manus handoff package (required before apply)
+Codex/Claude must produce these files:
+- docs/handoff/azure-resource-contract.md
+- docs/handoff/env-vars-and-secrets-matrix.md
+- docs/handoff/identity-and-access-matrix.md
+- docs/handoff/network-and-ingress-spec.md
+- docs/handoff/observability-and-alerts-spec.md
+- docs/handoff/release-and-rollback-runbook.md
+
+Each handoff document must include:
+- required vs optional fields
+- source of truth (app config, workflow, or terraform output)
+- validation command or check
+- rollback/fallback notes
+
+10.2 Azure acceptance checklist (Manus-owned execution)
+- All required resources exist in staging with expected names/tags.
+- Backend and frontend containers are reachable and healthy.
+- Managed identity can read required Key Vault secrets.
+- App can connect to Postgres, Redis, Blob, and telemetry endpoints.
+- OIDC GitHub deployment works without static credentials.
+- Dashboards and alerts fire on synthetic failure tests.
+
+====================================================================
+11) DEMO APPROACH
+====================================================================
+Portfolio demos use recorded real findings captured during normal
+development. No intentionally vulnerable code lives in this repository.
+
+Demo material sources:
+- Screenshots/recordings of security scanners catching real findings.
+- Before/after diffs from actual remediation commits.
+- CI gate failure logs from real blocked merges.
+- Semgrep rule test fixtures (positive and negative cases).
+
+====================================================================
+12) REVISED BUILD ORDER
+====================================================================
+Session 1
+- [Codex/Claude] Scaffold repo, docker-compose, health endpoints.
+
+Session 2
+- [Codex/Claude] Models, migrations, constraints, indexes.
+
+Session 3
+- [Codex/Claude] Auth/session, role/object authorization utilities.
+
+Session 4
+- [Codex/Claude] Contract CRUD + object-level access checks + audit integration.
+
+Session 5
+- [Codex/Claude] File upload/download/versioning with MIME checks and checksum.
+
+Session 6
+- [Codex/Claude] Approval chain logic and template evaluation.
+
+Session 7
+- [Codex/Claude] Admin routes and audit reporting APIs.
+
+Session 8
+- [Codex/Claude] Frontend auth shell and route guards.
+
+Session 9
+- [Codex/Claude] Contracts dashboard/list/detail/upload/version UX.
+
+Session 10
+- [Codex/Claude] Scheduled jobs implementation and job container packaging.
+- [Manus] Container Apps Jobs creation, schedule wiring, and identity binding.
+
+Session 11
+- [Codex/Claude] CI test gates + security gates + OIDC-ready staging deploy workflow.
+- [Manus] Azure federated identity setup and environment protection policy.
+
+Session 12
+- [Codex/Claude] DAST workflow and alert specification.
+- [Manus] Azure Monitor/Log Analytics dashboard and alert implementation.
+
+Session 13
+- [Codex/Claude] Deliver docs/handoff package, deployment contract freeze,
+  and portfolio demo pack (recorded findings, before/after diffs).
+- [Manus] Execute Terraform apply for staging and return output manifest.
+
+Session 14
+- [Codex/Claude] Smoke test app against Manus staging endpoints and patch gaps.
+- [Manus] Promote final staging configuration baseline.
+
+====================================================================
+13) NON-NEGOTIABLE ACCEPTANCE CRITERIA
+====================================================================
+- No plaintext secrets in repo or CI logs.
+- No browser storage of auth bearer tokens.
+- No in-app cron loops for business-critical periodic tasks.
+- Every protected endpoint has role and object-level authorization.
+- CI blocks merge on critical security findings.
+- Staging deployment verifies health, migration, and DAST before release.
+- Ownership boundary is respected: no Azure manual steps hidden in app docs.
+- Manus receives complete handoff package with zero ambiguous variables.
+
+====================================================================
+14) DELIVERABLES AFTER BUILD
+====================================================================
+- Architecture Decision Records (ADRs) for auth and job model.
+- Threat model for auth, file upload, approvals, and admin paths.
+- Incident response runbook.
+- Key rotation and credential lifecycle policy.
+
+End of Document
+PipelineZero - ContractFlow Build Plan v2.1

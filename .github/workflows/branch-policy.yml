@@ -1,0 +1,20 @@
+name: branch-policy
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  enforce-branch-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify PR description is non-empty
+        shell: bash
+        run: |
+          set -euo pipefail
+          BODY_FILE="${{ github.event_path }}"
+          BODY=$(jq -r '.pull_request.body // ""' "$BODY_FILE")
+          if [ -z "$BODY" ]; then
+            echo "ERROR: PR description must not be empty."
+            exit 1
+          fi

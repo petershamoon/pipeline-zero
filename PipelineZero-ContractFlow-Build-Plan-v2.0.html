@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>PipelineZero ContractFlow Build Plan v2.0</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; line-height: 1.4; color: #111; margin: 36px; }
+    h1, h2, h3 { color: #0f2f5f; margin-top: 1.2em; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 20px; }
+    h3 { font-size: 16px; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0 20px; }
+    th, td { border: 1px solid #cfcfcf; padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f2f6fc; }
+    code, pre { font-family: Menlo, Consolas, monospace; font-size: 12px; }
+    pre { background: #f8f8f8; border: 1px solid #ddd; padding: 10px; overflow: auto; }
+    .note { background: #eef7ff; border-left: 4px solid #3d76c5; padding: 10px; }
+    .warn { background: #fff7e9; border-left: 4px solid #c28900; padding: 10px; }
+  </style>
+</head>
+<body>
+<h1>PipelineZero - ContractFlow Build Plan v2.0</h1>
+<p><strong>Last Updated:</strong> March 6, 2026</p>
+<p><strong>Purpose:</strong> Complete build specification for a secure, demo-ready ContractFlow platform with explicit production-safe and demo-safe modes.</p>
+
+<div class="note">
+  <strong>Document intent:</strong> This version replaces the earlier plan and fixes architecture, security, and deployment risks while preserving the original demo narrative.
+</div>
+
+<h2>1. Executive Summary</h2>
+<ul>
+  <li>Keep a modular monolith architecture: FastAPI backend + React frontend + PostgreSQL.</li>
+  <li>Move scheduled business jobs out of API process into Azure Container Apps Jobs (or Azure Functions Timer).</li>
+  <li>Use cookie-based auth session model for browser clients (HttpOnly, Secure, SameSite, CSRF protection).</li>
+  <li>Use distributed rate limiting and token/session controls backed by Redis.</li>
+  <li>Use GitHub OIDC federation to Azure; remove long-lived cloud credentials from GitHub secrets.</li>
+  <li>Pin all GitHub Actions by full commit SHA, not mutable tags like <code>@master</code>.</li>
+  <li>Split workflows into Production Safe and Demo Vulnerability modes to avoid accidental insecure releases.</li>
+</ul>
+
+<h2>2. Updated Technology Baseline</h2>
+<table>
+  <tr><th>Layer</th><th>Recommended Technology</th><th>Rationale</th></tr>
+  <tr><td>Backend API</td><td>Python 3.12 + FastAPI</td><td>Good fit for typed APIs and fast delivery.</td></tr>
+  <tr><td>Data Access</td><td>SQLAlchemy 2.x + Alembic</td><td>Mature ORM and migrations.</td></tr>
+  <tr><td>Validation</td><td>Pydantic v2 + pydantic-settings</td><td>Strong schema enforcement and config typing.</td></tr>
+  <tr><td>Auth (Preferred)</td><td>Entra ID (OIDC/OAuth2)</td><td>Offloads password reset, MFA, and token lifecycle.</td></tr>
+  <tr><td>Auth (Fallback)</td><td>Local auth + Argon2id + HttpOnly cookies</td><td>If managed identity provider is not available.</td></tr>
+  <tr><td>Frontend</td><td>React + TypeScript + Vite + TanStack Query</td><td>Fast SPA development and caching model.</td></tr>
+  <tr><td>State</td><td>Zustand for UI state only</td><td>Do not persist access tokens to localStorage.</td></tr>
+  <tr><td>Rate Limit + Cache</td><td>Redis</td><td>Required for multi-replica consistency.</td></tr>
+  <tr><td>Background Jobs</td><td>Azure Container Apps Jobs</td><td>Single-run scheduling, no duplicate task execution.</td></tr>
+  <tr><td>File Storage</td><td>Azure Blob Storage</td><td>Durable versioned file object storage.</td></tr>
+  <tr><td>Secrets</td><td>Azure Key Vault + Managed Identity</td><td>No plaintext production secrets in environment files.</td></tr>
+  <tr><td>Observability</td><td>OpenTelemetry + Azure Monitor + Log Analytics</td><td>Trace, metrics, and logs correlation.</td></tr>
+  <tr><td>Security Scans</td><td>Semgrep, CodeQL, Trivy, Checkov, Gitleaks</td><td>Layered AppSec gates.</td></tr>
+</table>
+
+<h2>3. Repository Structure (New)</h2>
+<pre>contractflow/
+  backend/
+    app/
+      api/v1/
+      core/                 # config, security, middleware
+      models/
+      schemas/
+      services/
+      repositories/
+      workers/              # reusable task logic (invoked by API/jobs)
+      telemetry/            # logging and tracing setup
+      main.py
+    migrations/
+    tests/
+      unit/
+      integration/
+      security/
+    requirements.txt
+    requirements-dev.txt
+    Dockerfile
+  frontend/
+    src/
+      app/
+      pages/
+      components/
+      hooks/
+      services/
+      store/
+      types/
+      test/
+    package.json
+    vite.config.ts
+    nginx.conf
+    Dockerfile
+  jobs/
+    expiration-job/         # scheduled contract expiration + notices
+    notification-job/       # retries and digest emails
+  infra/
+    modules/
+    envs/
+      staging/
+      production/
+    main.tf
+  .github/workflows/
+    ci.yml
+    security.yml
+    deploy-staging.yml
+    deploy-production.yml
+    dast.yml
+  semgrep-rules/
+  docs/
+    runbooks/
+    architecture/
+  docker-compose.yml
+  docker-compose.test.yml
+  README.md</pre>
+
+<h2>4. Architecture Decisions</h2>
+<h3>4.1 Core pattern</h3>
+<ul>
+  <li>Use a modular monolith with strong domain boundaries: auth, contracts, versions, approvals, admin, audit.</li>
+  <li>Avoid premature microservices. Keep one deployable backend service plus independent scheduled jobs.</li>
+  <li>Extract heavy background tasks into jobs, not API startup loops.</li>
+</ul>
+
+<h3>4.2 Request flow</h3>
+<ul>
+  <li>Frontend sends request with secure session cookie.</li>
+  <li>API middleware validates session/JWT and loads user context.</li>
+  <li>Endpoint executes role + object-level authorization checks.</li>
+  <li>Service layer performs domain logic.</li>
+  <li>Repository/ORM handles persistence and transaction scope.</li>
+  <li>Audit event is appended for all state-changing actions.</li>
+</ul>
+
+<h3>4.3 Scheduling model</h3>
+<ul>
+  <li>Run expiration and reminder tasks with Azure Container Apps Jobs on cron schedule.</li>
+  <li>Use idempotency key and advisory locks to prevent duplicate updates.</li>
+  <li>Do not run perpetual <code>asyncio.sleep()</code> loops in API containers.</li>
+</ul>
+
+<h2>5. Security Architecture</h2>
+<h3>5.1 Authentication and sessions</h3>
+<ul>
+  <li>Preferred: Entra ID with OIDC authorization code flow + PKCE for SPA.</li>
+  <li>Fallback: local auth with Argon2id password hashes and short-lived session cookies.</li>
+  <li>Store refresh/session tokens server-side as hashes and rotate on every use.</li>
+  <li>Never persist bearer tokens in <code>localStorage</code> or <code>sessionStorage</code>.</li>
+</ul>
+
+<h3>5.2 Authorization</h3>
+<ul>
+  <li>Enforce both role-based and object-level checks (BOLA prevention).</li>
+  <li>Centralize authorization logic in reusable policy functions and test them directly.</li>
+  <li>UI may hide unauthorized controls, but API remains final enforcement boundary.</li>
+</ul>
+
+<h3>5.3 Upload hardening</h3>
+<ul>
+  <li>Validate MIME type using <code>python-magic</code> and allowlist only approved types.</li>
+  <li>Perform max-size checks before persistence and use streamed uploads where practical.</li>
+  <li>Store SHA-256 checksum and optionally route uploaded files through malware scanning.</li>
+  <li>Issue short-lived SAS URLs scoped to read-only operations.</li>
+</ul>
+
+<h3>5.4 Application hardening</h3>
+<ul>
+  <li>Security headers: HSTS, X-Content-Type-Options, Referrer-Policy, frame restrictions.</li>
+  <li>CORS set to explicit trusted origins only.</li>
+  <li>Global exception handler returns opaque errors; stack traces only in logs.</li>
+  <li>Rate limits per route and per identity/IP with distributed backend.</li>
+</ul>
+
+<h2>6. Data Model Updates</h2>
+<h3>6.1 Required schema controls</h3>
+<ul>
+  <li>Use UUID primary keys, timezone-aware timestamps, and soft delete where needed.</li>
+  <li>Add check constraints for date ranges and non-negative currency values.</li>
+  <li>Add optimistic locking/version field for concurrent contract edits.</li>
+  <li>Add unique index on normalized email (case-insensitive).</li>
+  <li>Rename audit field from <code>metadata</code> to <code>metadata_json</code> in ORM model to avoid SQLAlchemy conflicts.</li>
+</ul>
+
+<h3>6.2 Audit model requirements</h3>
+<ul>
+  <li>Append-only audit table with immutable rows.</li>
+  <li>Capture actor, action, resource, IP, user-agent, correlation id, and metadata payload.</li>
+  <li>Write audit event in same transaction when business mutation occurs.</li>
+</ul>
+
+<h2>7. Backend Build Specification</h2>
+<h3>7.1 Config and startup</h3>
+<ul>
+  <li>Use Pydantic v2 settings with explicit parsing for list values (for origins, hosts).</li>
+  <li>Support local <code>.env</code> only in development mode.</li>
+  <li>Expose <code>/health/live</code> and <code>/health/ready</code> endpoints.</li>
+</ul>
+
+<h3>7.2 API design and standards</h3>
+<ul>
+  <li>REST endpoints under <code>/api/v1</code>.</li>
+  <li>Consistent error envelope and error codes.</li>
+  <li>Pagination: cursor or limit/offset with total count for admin/reporting views.</li>
+  <li>All state changes produce audit events.</li>
+</ul>
+
+<h3>7.3 Docker hardening</h3>
+<ul>
+  <li>Run as non-root user.</li>
+  <li>Include only required OS packages and clean apt cache.</li>
+  <li>Use JSON-form <code>CMD</code> syntax with double quotes.</li>
+  <li>Ensure healthcheck command exists in image (install <code>curl</code> or use python probe).</li>
+</ul>
+
+<h3>7.4 Testing requirements</h3>
+<ul>
+  <li>Unit tests for services and authorization policies.</li>
+  <li>Integration tests for auth, contract lifecycle, approvals, and upload flow.</li>
+  <li>Security tests for unauthorized access and policy bypass attempts.</li>
+  <li>Target baseline coverage of 70 percent on new code.</li>
+</ul>
+
+<h2>8. Frontend Build Specification</h2>
+<h3>8.1 Session handling</h3>
+<ul>
+  <li>Use secure cookie auth; frontend should not read refresh token directly.</li>
+  <li>Keep only non-sensitive user profile and UI preferences in persisted state.</li>
+  <li>Use React Query for server state and cache invalidation after mutations.</li>
+</ul>
+
+<h3>8.2 UX and security rules</h3>
+<ul>
+  <li>Render role-appropriate views and actions.</li>
+  <li>Gracefully handle 401/403 with redirect and user feedback.</li>
+  <li>Client-side file checks are UX hints only; server is authority.</li>
+</ul>
+
+<h3>8.3 Nginx container</h3>
+<ul>
+  <li>Add explicit <code>/health</code> location returning 200 for probes.</li>
+  <li>Serve immutable static assets with long cache headers.</li>
+  <li>Retain SPA fallback routing to <code>index.html</code>.</li>
+</ul>
+
+<h2>9. CI/CD and Security Pipeline</h2>
+<h3>9.1 Pipeline stages</h3>
+<ul>
+  <li>Stage 1: format and lint.</li>
+  <li>Stage 2: unit and integration tests.</li>
+  <li>Stage 3: SAST/SCA/secret scanning (Semgrep, CodeQL, Trivy, Gitleaks).</li>
+  <li>Stage 4: build images, generate SBOM, sign images.</li>
+  <li>Stage 5: deploy to staging.</li>
+  <li>Stage 6: DAST against staging.</li>
+  <li>Stage 7: manual approval gate for production promotion.</li>
+</ul>
+
+<h3>9.2 GitHub Actions requirements</h3>
+<ul>
+  <li>Pin all third-party actions by commit SHA.</li>
+  <li>Use least-privilege job permissions.</li>
+  <li>Use OIDC login to Azure; remove static <code>AZURE_CREDENTIALS</code> secret.</li>
+  <li>Use workflow concurrency controls for deployment workflows.</li>
+</ul>
+
+<h3>9.3 Semgrep rule strategy</h3>
+<ul>
+  <li>Refine custom rules to avoid brittle pattern matching and false positives.</li>
+  <li>Add regression tests for each custom rule with positive/negative fixtures.</li>
+  <li>Treat auth bypass, raw SQL, hardcoded secret, and insecure CORS as blocking findings.</li>
+</ul>
+
+<h2>10. Infrastructure Plan (Terraform)</h2>
+<h3>10.1 Provisioned resources</h3>
+<ul>
+  <li>Resource Group, VNet/subnets, private DNS where required.</li>
+  <li>Container Apps Environment for backend, frontend, and jobs.</li>
+  <li>PostgreSQL Flexible Server (private access), Redis, Blob Storage, Key Vault.</li>
+  <li>ACR with admin disabled and pull via managed identity.</li>
+  <li>Log Analytics + Azure Monitor alerts.</li>
+</ul>
+
+<h3>10.2 Environment strategy</h3>
+<ul>
+  <li>Separate staging and production via dedicated variable sets and state isolation.</li>
+  <li>Use remote Terraform backend with state locking.</li>
+  <li>Tag all resources by environment, owner, data-classification, and cost-center.</li>
+</ul>
+
+<h3>10.3 Reliability and recovery</h3>
+<ul>
+  <li>Configure automated Postgres backups and retention policy.</li>
+  <li>Define RPO/RTO targets and restore runbook.</li>
+  <li>Enable alerting for failed jobs, high error rates, and auth anomaly spikes.</li>
+</ul>
+
+<h2>11. Demo Mode vs Production Mode</h2>
+<div class="warn">
+  <strong>Critical control:</strong> seeded vulnerabilities are allowed only in Demo Mode branches/workspaces and must never be merged into protected production branches.
+</div>
+<ul>
+  <li>Create dedicated branch family: <code>demo/vuln-*</code>.</li>
+  <li>Add branch protection so demo branches cannot deploy to production environments.</li>
+  <li>Add repository labels and PR templates that mark intentional vulnerabilities.</li>
+  <li>Use separate staging namespace for demo scans if possible.</li>
+</ul>
+
+<h2>12. Build Order (Revised)</h2>
+<ol>
+  <li>Repository scaffold, base Docker Compose, health endpoints.</li>
+  <li>Models, migrations, indexes, and constraints.</li>
+  <li>Auth/session implementation and authorization policy library.</li>
+  <li>Contract CRUD with object-level access checks.</li>
+  <li>Versioned file upload/download with MIME validation and checksums.</li>
+  <li>Approval chain and template engine.</li>
+  <li>Audit pipeline and admin reporting APIs.</li>
+  <li>React auth and shell pages, then contract workflows.</li>
+  <li>Background jobs and idempotency protections.</li>
+  <li>CI/CD with tests + security gates + staging deploy.</li>
+  <li>DAST and observability dashboards.</li>
+  <li>Demo mode vulnerability seeding in isolated branch only.</li>
+</ol>
+
+<h2>13. Non-Negotiable Acceptance Criteria</h2>
+<ul>
+  <li>No plaintext secrets in repository or CI logs.</li>
+  <li>No auth tokens persisted in browser storage.</li>
+  <li>No in-app cron loops for multi-replica business tasks.</li>
+  <li>All protected endpoints validated by role and object-level checks.</li>
+  <li>CI pipeline blocks merge on critical security findings.</li>
+  <li>Staging deployment verifies health, migration, and DAST before release approval.</li>
+</ul>
+
+<h2>14. Suggested Next Deliverables</h2>
+<ul>
+  <li>Architecture decision records (ADRs) for auth model, job runner model, and deployment model.</li>
+  <li>Threat model (STRIDE) for auth, file upload, and admin operations.</li>
+  <li>Operational runbook for incident response and key rotation.</li>
+</ul>
+
+<p><strong>End of Document</strong><br/>PipelineZero - ContractFlow Build Plan v2.0</p>
+</body>
+</html>

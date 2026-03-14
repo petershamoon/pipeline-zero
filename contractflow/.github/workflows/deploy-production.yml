@@ -1,0 +1,57 @@
+name: deploy-production
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    defaults:
+      run:
+        working-directory: contractflow
+    env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      ACR_NAME: ${{ secrets.ACR_NAME }}
+      RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
+      PRODUCTION_BACKEND_APP: ${{ secrets.PRODUCTION_BACKEND_APP }}
+      PRODUCTION_FRONTEND_APP: ${{ secrets.PRODUCTION_FRONTEND_APP }}
+      IMAGE_TAG: ${{ github.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+      - name: Validate required environment
+        run: |
+          set -euo pipefail
+          for key in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID ACR_NAME RESOURCE_GROUP PRODUCTION_BACKEND_APP PRODUCTION_FRONTEND_APP IMAGE_TAG; do
+            if [ -z "${!key:-}" ]; then
+              echo "Missing required secret: $key"
+              exit 1
+            fi
+          done
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy production revisions
+        run: |
+          set -euo pipefail
+          BACKEND_IMAGE="$ACR_NAME.azurecr.io/contractflow/backend:${IMAGE_TAG}"
+          FRONTEND_IMAGE="$ACR_NAME.azurecr.io/contractflow/frontend:${IMAGE_TAG}"
+          az containerapp update -g "$RESOURCE_GROUP" -n "$PRODUCTION_BACKEND_APP" --image "$BACKEND_IMAGE"
+          az containerapp update -g "$RESOURCE_GROUP" -n "$PRODUCTION_FRONTEND_APP" --image "$FRONTEND_IMAGE"

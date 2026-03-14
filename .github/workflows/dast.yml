@@ -1,0 +1,37 @@
+name: dast-gate
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["deploy-staging"]
+    types: [completed]
+
+jobs:
+  zap-baseline:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    env:
+      STAGING_BASE_URL: ${{ secrets.STAGING_BASE_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+      - name: Validate staging URL
+        run: |
+          if [ -z "${STAGING_BASE_URL:-}" ]; then
+            echo "Missing STAGING_BASE_URL secret"
+            exit 1
+          fi
+
+      - name: Run ZAP baseline
+        run: |
+          docker run --rm -v "$PWD:/zap/wrk" ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py -t "$STAGING_BASE_URL" -r zap-report.html -J zap-report.json -m 5
+
+      - name: Upload DAST artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dast-report
+          path: |
+            zap-report.html
+            zap-report.json

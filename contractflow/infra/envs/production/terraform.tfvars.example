@@ -1,0 +1,15 @@
+project_name = "cf"
+environment  = "prd"
+location     = "eastus2"
+sequence_number = "01"
+
+allowed_frontend_origins = [
+  "https://contractflow.example.com"
+]
+
+backend_image  = "<acr>.azurecr.io/contractflow/backend:<tag>"
+frontend_image = "<acr>.azurecr.io/contractflow/frontend:<tag>"
+
+entra_tenant_id = "<tenant-id>"
+entra_client_id = "<client-id>"
+entra_audience  = "api://contractflow-prd"

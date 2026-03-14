@@ -1,0 +1,21 @@
+[project]
+name = "contractflow-backend"
+version = "0.1.0"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B", "SIM"]
+ignore = ["B008", "E501", "UP017", "UP042"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = [
+    "unit: unit tests",
+    "integration: integration tests requiring DB",
+    "security: security and access control tests",
+]

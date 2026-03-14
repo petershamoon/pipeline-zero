@@ -1,0 +1,43 @@
+# ---- Secrets and credentials ----
+.env
+.env.*
+*.env
+!.env.example
+!*.env.example
+envcopy.txt
+
+# ---- Terraform ----
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+!*.tfvars.example
+crash.log
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# ---- Node.js ----
+node_modules/
+.next/
+.nuxt/
+
+# ---- IDE ----
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ---- Build artifacts ----
+*.zip
