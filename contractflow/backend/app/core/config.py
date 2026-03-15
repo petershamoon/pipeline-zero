@@ -73,6 +73,19 @@ class Settings(BaseSettings):
         return self.ENVIRONMENT == "production"
 
     @property
+    def database_url_async(self) -> str:
+        """Ensure the DATABASE_URL uses the asyncpg driver."""
+        url = self.DATABASE_URL
+        if url.startswith("postgresql://"):
+            return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return url
+
+    @property
+    def database_url_sync(self) -> str:
+        """Return a sync-compatible DATABASE_URL (for Alembic migrations)."""
+        return self.DATABASE_URL.replace("+asyncpg", "")
+
+    @property
     def allowed_origins_list(self) -> list[str]:
         raw = self.ALLOWED_ORIGINS.strip()
         if not raw:

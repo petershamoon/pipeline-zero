@@ -13,6 +13,7 @@ ignore = ["B008", "E501", "UP017", "UP042"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+pythonpath = ["."]
 testpaths = ["tests"]
 markers = [
     "unit: unit tests",
