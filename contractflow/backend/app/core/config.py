@@ -74,10 +74,20 @@ class Settings(BaseSettings):
 
     @property
     def database_url_async(self) -> str:
-        """Ensure the DATABASE_URL uses the asyncpg driver."""
+        """Ensure the DATABASE_URL uses the asyncpg driver.
+
+        asyncpg does not accept the psycopg2-style ?sslmode=require query param;
+        it requires ?ssl=true instead. We normalise here so the same DATABASE_URL
+        value works for both Alembic (psycopg2, sync) and uvicorn (asyncpg, async).
+        """
         url = self.DATABASE_URL
         if url.startswith("postgresql://"):
-            return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        if not url.startswith("postgresql+asyncpg://"):
+            url = url.replace("postgresql+psycopg2://", "postgresql+asyncpg://", 1)
+        # Replace psycopg2-style sslmode=require with asyncpg-style ssl=true
+        url = url.replace("?sslmode=require", "?ssl=true")
+        url = url.replace("&sslmode=require", "&ssl=true")
         return url
 
     @property
