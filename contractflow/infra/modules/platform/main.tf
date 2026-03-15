@@ -186,9 +186,17 @@ resource "azurerm_key_vault" "main" {
   tenant_id                  = data.azurerm_client_config.current.tenant_id
   sku_name                   = "standard"
   soft_delete_retention_days = 7
-  purge_protection_enabled   = false # staging only — enable in production
+  purge_protection_enabled   = true  # enabled: satisfies Semgrep keyvault-purge-enabled; soft_delete_retention_days=7 is the minimum
   rbac_authorization_enabled  = true
   tags                       = local.all_tags
+
+  # Semgrep: keyvault-specify-network-acl — default deny with AzureServices bypass
+  network_acls {
+    default_action             = "Deny"
+    bypass                     = ["AzureServices"]
+    ip_rules                   = []
+    virtual_network_subnet_ids = []
+  }
 }
 
 # Grant current deployer Key Vault Administrator for secret management
@@ -211,6 +219,17 @@ resource "azurerm_storage_account" "main" {
   allow_nested_items_to_be_public = false
   min_tls_version                 = "TLS1_2"
   tags                            = local.all_tags
+
+  # Semgrep: storage-queue-services-logging — enable queue service logging
+  queue_properties {
+    logging {
+      delete                = true
+      read                  = true
+      write                 = true
+      version               = "1.0"
+      retention_policy_days = 7
+    }
+  }
 }
 
 resource "azurerm_storage_container" "contracts" {
@@ -312,31 +331,55 @@ resource "azurerm_role_assignment" "backend_acr" {
 # ─────────────────────────────────────────────
 
 resource "azurerm_key_vault_secret" "database_url" {
-  name         = "DATABASE-URL"
-  value        = "postgresql+asyncpg://cfadmin:${var.postgres_admin_password}@${azurerm_postgresql_flexible_server.main.fqdn}:5432/contractflow?sslmode=require"
-  key_vault_id = azurerm_key_vault.main.id
-  depends_on   = [azurerm_role_assignment.kv_deployer_admin]
+  name            = "DATABASE-URL"
+  value           = "postgresql+asyncpg://cfadmin:${var.postgres_admin_password}@${azurerm_postgresql_flexible_server.main.fqdn}:5432/contractflow?sslmode=require"
+  key_vault_id    = azurerm_key_vault.main.id
+  content_type    = "text/plain" # Semgrep: keyvault-content-type-for-secret
+  expiration_date = timeadd(timestamp(), "8760h") # Semgrep: keyvault-ensure-secret-expires — 1 year TTL
+  depends_on      = [azurerm_role_assignment.kv_deployer_admin]
+
+  lifecycle {
+    ignore_changes = [expiration_date] # prevent perpetual drift on re-apply
+  }
 }
 
 resource "azurerm_key_vault_secret" "redis_url" {
-  name         = "REDIS-URL"
-  value        = "rediss://:${azurerm_redis_cache.main.primary_access_key}@${azurerm_redis_cache.main.hostname}:${azurerm_redis_cache.main.ssl_port}/0"
-  key_vault_id = azurerm_key_vault.main.id
-  depends_on   = [azurerm_role_assignment.kv_deployer_admin]
+  name            = "REDIS-URL"
+  value           = "rediss://:${azurerm_redis_cache.main.primary_access_key}@${azurerm_redis_cache.main.hostname}:${azurerm_redis_cache.main.ssl_port}/0"
+  key_vault_id    = azurerm_key_vault.main.id
+  content_type    = "text/plain" # Semgrep: keyvault-content-type-for-secret
+  expiration_date = timeadd(timestamp(), "8760h") # Semgrep: keyvault-ensure-secret-expires — 1 year TTL
+  depends_on      = [azurerm_role_assignment.kv_deployer_admin]
+
+  lifecycle {
+    ignore_changes = [expiration_date] # prevent perpetual drift on re-apply
+  }
 }
 
 resource "azurerm_key_vault_secret" "csrf_secret" {
-  name         = "CSRF-SECRET"
-  value        = var.db_app_password # reuse as a strong random value, or generate separately
-  key_vault_id = azurerm_key_vault.main.id
-  depends_on   = [azurerm_role_assignment.kv_deployer_admin]
+  name            = "CSRF-SECRET"
+  value           = var.db_app_password # reuse as a strong random value, or generate separately
+  key_vault_id    = azurerm_key_vault.main.id
+  content_type    = "text/plain" # Semgrep: keyvault-content-type-for-secret
+  expiration_date = timeadd(timestamp(), "8760h") # Semgrep: keyvault-ensure-secret-expires — 1 year TTL
+  depends_on      = [azurerm_role_assignment.kv_deployer_admin]
+
+  lifecycle {
+    ignore_changes = [expiration_date] # prevent perpetual drift on re-apply
+  }
 }
 
 resource "azurerm_key_vault_secret" "key_vault_uri" {
-  name         = "KEY-VAULT-URI"
-  value        = azurerm_key_vault.main.vault_uri
-  key_vault_id = azurerm_key_vault.main.id
-  depends_on   = [azurerm_role_assignment.kv_deployer_admin]
+  name            = "KEY-VAULT-URI"
+  value           = azurerm_key_vault.main.vault_uri
+  key_vault_id    = azurerm_key_vault.main.id
+  content_type    = "text/plain" # Semgrep: keyvault-content-type-for-secret
+  expiration_date = timeadd(timestamp(), "8760h") # Semgrep: keyvault-ensure-secret-expires — 1 year TTL
+  depends_on      = [azurerm_role_assignment.kv_deployer_admin]
+
+  lifecycle {
+    ignore_changes = [expiration_date] # prevent perpetual drift on re-apply
+  }
 }
 
 # ─────────────────────────────────────────────

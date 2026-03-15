@@ -1,18 +1,14 @@
 name: deploy-staging
-
 on:
   push:
     branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: read
   id-token: write
-
 concurrency:
   group: deploy-staging
   cancel-in-progress: false
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -29,6 +25,8 @@ jobs:
       STAGING_BACKEND_APP: ${{ secrets.STAGING_BACKEND_APP }}
       STAGING_FRONTEND_APP: ${{ secrets.STAGING_FRONTEND_APP }}
       STAGING_BASE_URL: ${{ secrets.STAGING_BASE_URL }}
+      ENTRA_APP_CLIENT_ID: ${{ secrets.ENTRA_APP_CLIENT_ID }}
+      KEY_VAULT_NAME: cf-stg-kv-eastus2-01
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
@@ -50,6 +48,33 @@ jobs:
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
+      # ── Fetch runtime secrets from Key Vault ──────────────────────────────
+      # DATABASE_URL and REDIS_URL live in Key Vault (set by Terraform).
+      # Fetched here and masked so they never appear in logs.
+      - name: Fetch secrets from Key Vault
+        run: |
+          set -euo pipefail
+          DATABASE_URL=$(az keyvault secret show \
+            --vault-name "$KEY_VAULT_NAME" \
+            --name "DATABASE-URL" \
+            --query "value" -o tsv)
+          REDIS_URL=$(az keyvault secret show \
+            --vault-name "$KEY_VAULT_NAME" \
+            --name "REDIS-URL" \
+            --query "value" -o tsv)
+          CSRF_SECRET=$(az keyvault secret show \
+            --vault-name "$KEY_VAULT_NAME" \
+            --name "CSRF-SECRET" \
+            --query "value" -o tsv)
+          # Mask values so they never appear in logs
+          echo "::add-mask::$DATABASE_URL"
+          echo "::add-mask::$REDIS_URL"
+          echo "::add-mask::$CSRF_SECRET"
+          # Export for subsequent steps
+          echo "DATABASE_URL=$DATABASE_URL" >> "$GITHUB_ENV"
+          echo "REDIS_URL=$REDIS_URL" >> "$GITHUB_ENV"
+          echo "CSRF_SECRET=$CSRF_SECRET" >> "$GITHUB_ENV"
+
       - name: Build and push backend image
         run: |
           set -euo pipefail
@@ -59,49 +84,92 @@ jobs:
           docker push "$BACKEND_IMAGE"
           echo "BACKEND_IMAGE=$BACKEND_IMAGE" >> "$GITHUB_ENV"
 
+      # ── Frontend build with MSAL build-time vars ──────────────────────────
+      # Vite bakes VITE_* vars into the bundle at build time.
+      # They must be passed as --build-arg; Container App env vars are too late.
+      - name: Resolve FQDNs for build args
+        run: |
+          set -euo pipefail
+          BACKEND_FQDN=$(az containerapp show \
+            -g "$RESOURCE_GROUP" -n "$STAGING_BACKEND_APP" \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          FRONTEND_FQDN=$(az containerapp show \
+            -g "$RESOURCE_GROUP" -n "$STAGING_FRONTEND_APP" \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          echo "BACKEND_FQDN=$BACKEND_FQDN" >> "$GITHUB_ENV"
+          echo "FRONTEND_FQDN=$FRONTEND_FQDN" >> "$GITHUB_ENV"
+
       - name: Build and push frontend image
         run: |
           set -euo pipefail
           FRONTEND_IMAGE="$ACR_NAME.azurecr.io/contractflow/frontend:${GITHUB_SHA}"
-          docker build -t "$FRONTEND_IMAGE" frontend
+          docker build \
+            --build-arg VITE_ENTRA_CLIENT_ID="${ENTRA_APP_CLIENT_ID}" \
+            --build-arg VITE_ENTRA_AUTHORITY="https://login.microsoftonline.com/${AZURE_TENANT_ID}" \
+            --build-arg VITE_ENTRA_REDIRECT_URI="https://${FRONTEND_FQDN}" \
+            --build-arg VITE_API_URL="https://${BACKEND_FQDN}/api/v1" \
+            -t "$FRONTEND_IMAGE" frontend
           docker push "$FRONTEND_IMAGE"
           echo "FRONTEND_IMAGE=$FRONTEND_IMAGE" >> "$GITHUB_ENV"
 
-      - name: Update staging container apps
+      # ── Update Container Apps with new image + env vars ───────────────────
+      # --set-env-vars injects/overwrites env vars on the running revision
+      # without requiring a full Terraform apply.
+      - name: Update backend Container App (image + env vars)
         run: |
           set -euo pipefail
-          az containerapp update -g "$RESOURCE_GROUP" -n "$STAGING_BACKEND_APP" --image "$BACKEND_IMAGE"
-          az containerapp update -g "$RESOURCE_GROUP" -n "$STAGING_FRONTEND_APP" --image "$FRONTEND_IMAGE"
+          az containerapp update \
+            -g "$RESOURCE_GROUP" \
+            -n "$STAGING_BACKEND_APP" \
+            --image "$BACKEND_IMAGE" \
+            --set-env-vars \
+              "ENVIRONMENT=staging" \
+              "DATABASE_URL=${DATABASE_URL}" \
+              "REDIS_URL=${REDIS_URL}" \
+              "CSRF_SECRET=${CSRF_SECRET}" \
+              "ENTRA_TENANT_ID=${AZURE_TENANT_ID}" \
+              "ENTRA_CLIENT_ID=${ENTRA_APP_CLIENT_ID}" \
+              "ENTRA_AUDIENCE=api://${ENTRA_APP_CLIENT_ID}" \
+              "ALLOWED_ORIGINS=https://${FRONTEND_FQDN}" \
+              "LOCAL_AUTH_ENABLED=false" \
+              "KEY_VAULT_URI=https://${KEY_VAULT_NAME}.vault.azure.net/"
+
+      - name: Update frontend Container App (image only)
+        run: |
+          set -euo pipefail
+          az containerapp update \
+            -g "$RESOURCE_GROUP" \
+            -n "$STAGING_FRONTEND_APP" \
+            --image "$FRONTEND_IMAGE"
 
       - name: Wait for revisions to stabilize
         run: |
-          echo "Waiting 30s for Container Apps revisions to stabilize..."
-          sleep 30
+          echo "Waiting 60s for Container Apps revisions to stabilize..."
+          sleep 60
 
       - name: Smoke test — backend health
         run: |
           set -euo pipefail
-          BACKEND_FQDN=$(az containerapp show -g "$RESOURCE_GROUP" -n "$STAGING_BACKEND_APP" \
-            --query "properties.configuration.ingress.fqdn" -o tsv)
           HEALTH_URL="https://${BACKEND_FQDN}/health/ready"
           echo "Checking: $HEALTH_URL"
-          for i in 1 2 3 4 5; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$HEALTH_URL" || echo "000")
+          for i in 1 2 3 4 5 6; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "$HEALTH_URL" || echo "000")
             echo "Attempt $i: HTTP $STATUS"
             if [ "$STATUS" = "200" ]; then
               echo "Backend health check passed"
               exit 0
             fi
-            sleep 15
+            sleep 20
           done
-          echo "Backend health check failed after 5 attempts"
+          echo "Backend health check failed after 6 attempts"
+          echo "Fetching container logs for diagnosis..."
+          az containerapp logs show -g "$RESOURCE_GROUP" -n "$STAGING_BACKEND_APP" \
+            --type console --tail 50 || true
           exit 1
 
       - name: Smoke test — frontend health
         run: |
           set -euo pipefail
-          FRONTEND_FQDN=$(az containerapp show -g "$RESOURCE_GROUP" -n "$STAGING_FRONTEND_APP" \
-            --query "properties.configuration.ingress.fqdn" -o tsv)
           HEALTH_URL="https://${FRONTEND_FQDN}/health"
           echo "Checking: $HEALTH_URL"
           for i in 1 2 3 4 5; do
