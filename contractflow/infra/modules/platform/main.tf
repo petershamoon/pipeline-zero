@@ -206,6 +206,13 @@ resource "azurerm_role_assignment" "kv_deployer_admin" {
   principal_id         = data.azurerm_client_config.current.object_id
 }
 
+# Grant GitHub Actions deployer Key Vault Secrets User to fetch secrets during deploy
+resource "azurerm_role_assignment" "kv_github_actions" {
+  scope                = azurerm_key_vault.main.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = "89e772b8-71e7-44e9-a1e8-cbd179b711d4" # GitHub Actions SP Object ID
+}
+
 # ─────────────────────────────────────────────
 # Storage Account + Blob Container
 # ─────────────────────────────────────────────
