@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>GitHub Actions — All Workflows | PipelineZero</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #e6edf3; }
+  .gh-header { background: #161b22; border-bottom: 1px solid #30363d; padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 16px; }
+  .gh-logo { color: #e6edf3; font-size: 22px; }
+  .gh-account { margin-left: auto; font-size: 13px; color: #8b949e; }
+  .repo-header { background: #161b22; border-bottom: 1px solid #30363d; padding: 12px 24px; }
+  .repo-path { font-size: 18px; }
+  .repo-path a { color: #58a6ff; text-decoration: none; }
+  .repo-path span { color: #8b949e; }
+  .repo-tabs { display: flex; gap: 0; padding: 0 24px; background: #161b22; border-bottom: 1px solid #30363d; }
+  .repo-tab { padding: 12px 16px; font-size: 14px; color: #8b949e; cursor: pointer; border-bottom: 2px solid transparent; }
+  .repo-tab.active { color: #e6edf3; border-bottom-color: #f78166; }
+  .content { max-width: 1200px; margin: 0 auto; padding: 24px; display: grid; grid-template-columns: 240px 1fr; gap: 24px; }
+  .sidebar { }
+  .sidebar-header { font-size: 13px; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .workflow-list { background: #161b22; border: 1px solid #30363d; border-radius: 6px; overflow: hidden; }
+  .workflow-item { padding: 10px 14px; font-size: 13px; border-bottom: 1px solid #21262d; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+  .workflow-item:last-child { border-bottom: none; }
+  .workflow-item.active { background: #1f6feb22; color: #58a6ff; }
+  .workflow-item .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-green { background: #3fb950; }
+  .dot-gray { background: #8b949e; }
+  .main { }
+  .runs-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .runs-title { font-size: 18px; font-weight: 600; color: #e6edf3; }
+  .runs-count { font-size: 13px; color: #8b949e; }
+  .run-row { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 14px 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; }
+  .run-row:hover { border-color: #8b949e; }
+  .run-status { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
+  .status-success { background: #238636; color: white; }
+  .status-failure { background: #da3633; color: white; }
+  .run-info { flex: 1; }
+  .run-name { font-size: 14px; font-weight: 600; color: #e6edf3; margin-bottom: 3px; }
+  .run-meta { font-size: 12px; color: #8b949e; }
+  .run-meta a { color: #58a6ff; text-decoration: none; }
+  .run-workflow { font-size: 12px; color: #8b949e; text-align: right; min-width: 140px; }
+  .run-duration { font-size: 12px; color: #8b949e; text-align: right; min-width: 60px; }
+  .workflow-badge { display: inline-block; background: #21262d; color: #8b949e; border: 1px solid #30363d; border-radius: 12px; padding: 1px 8px; font-size: 11px; margin-right: 4px; }
+  .workflow-badge.deploy { background: #1a4731; color: #3fb950; border-color: #238636; }
+  .workflow-badge.dast { background: #1c2128; color: #58a6ff; border-color: #388bfd; }
+  .workflow-badge.security { background: #2d1b69; color: #a371f7; border-color: #6e40c9; }
+  .footer-note { margin-top: 16px; padding: 12px 16px; background: #1c2128; border-left: 3px solid #388bfd; border-radius: 2px; font-size: 12px; color: #8b949e; }
+  .footer-note strong { color: #e6edf3; }
+</style>
+</head>
+<body>
+<div class="gh-header">
+  <div class="gh-logo">⬡</div>
+  <div class="gh-account">petershamoon</div>
+</div>
+<div class="repo-header">
+  <div class="repo-path"><a href="#">petershamoon</a> <span>/</span> <a href="#">pipeline-zero</a> <span style="font-size:13px; margin-left:8px; background:#1f6feb; color:white; padding:2px 8px; border-radius:12px; font-weight:600;">Private</span></div>
+</div>
+<div class="repo-tabs">
+  <div class="repo-tab">Code</div>
+  <div class="repo-tab">Issues</div>
+  <div class="repo-tab">Pull requests</div>
+  <div class="repo-tab active">Actions</div>
+  <div class="repo-tab">Security</div>
+</div>
+<div class="content">
+  <div class="sidebar">
+    <div class="sidebar-header">Workflows (6)</div>
+    <div class="workflow-list">
+      <div class="workflow-item active"><span class="dot dot-green"></span>All workflows</div>
+      <div class="workflow-item"><span class="dot dot-green"></span>deploy-staging</div>
+      <div class="workflow-item"><span class="dot dot-green"></span>dast-gate</div>
+      <div class="workflow-item"><span class="dot dot-gray"></span>deploy-production</div>
+      <div class="workflow-item"><span class="dot dot-gray"></span>security-gate</div>
+      <div class="workflow-item"><span class="dot dot-gray"></span>ci-lint-test</div>
+      <div class="workflow-item"><span class="dot dot-gray"></span>branch-policy</div>
+    </div>
+  </div>
+  <div class="main">
+    <div class="runs-header">
+      <div class="runs-title">All workflow runs</div>
+      <div class="runs-count">53 workflow runs</div>
+    </div>
+
+    <!-- Recent runs -->
+    <div class="run-row">
+      <div class="run-status status-success">✓</div>
+      <div class="run-info">
+        <div class="run-name">DAST Gate — Nuclei HTTP scan</div>
+        <div class="run-meta"><span class="workflow-badge dast">dast-gate</span> #19 · main · workflow_dispatch · 2026-03-15 02:47 UTC</div>
+      </div>
+      <div class="run-duration">8m 6s</div>
+    </div>
+
+    <div class="run-row">
+      <div class="run-status status-success">✓</div>
+      <div class="run-info">
+        <div class="run-name">feat: replace ZAP with nuclei for DAST (ZAP has upstream permission bug)</div>
+        <div class="run-meta"><span class="workflow-badge deploy">deploy-staging</span> #10 · main · push · 2026-03-15 01:58 UTC</div>
+      </div>
+      <div class="run-duration">1m 36s</div>
+    </div>
+
+    <div class="run-row">
+      <div class="run-status status-success">✓</div>
+      <div class="run-info">
+        <div class="run-name">fix: sync workflow files from contractflow to repo root .github/workflows</div>
+        <div class="run-meta"><span class="workflow-badge deploy">deploy-staging</span> #9 · main · push · 2026-03-15 01:45 UTC</div>
+      </div>
+      <div class="run-duration">1m 41s</div>
+    </div>
+
+    <div class="run-row">
+      <div class="run-status status-success">✓</div>
+      <div class="run-info">
+        <div class="run-name">feat: add smoke test health checks to deploy-staging workflow</div>
+        <div class="run-meta"><span class="workflow-badge deploy">deploy-staging</span> #8 · main · push · 2026-03-15 01:22 UTC</div>
+      </div>
+      <div class="run-duration">1m 44s</div>
+    </div>
+
+    <div class="run-row">
+      <div class="run-status status-success">✓</div>
+      <div class="run-info">
+        <div class="run-name">chore: update all scripts and configs for pipeline-zero repo; add Bandit SAST</div>
+        <div class="run-meta"><span class="workflow-badge deploy">deploy-staging</span> #7 · main · push · 2026-03-15 00:58 UTC</div>
+      </div>
+      <div class="run-duration">1m 39s</div>
+    </div>
+
+    <div class="footer-note">
+      <strong>Evidence note:</strong> 53 total workflow runs as of 2026-03-15. 6 workflows active: <code>deploy-staging</code> (3 successful deploys), <code>dast-gate</code> (19 runs, last one PASSED with nuclei), <code>deploy-production</code> (pending), <code>security-gate</code> (Bandit + pip-audit + Trivy), <code>ci-lint-test</code>, <code>branch-policy</code>. All deploy runs use OIDC — no long-lived credentials in any runner.
+    </div>
+  </div>
+</div>
+</body>
+</html>

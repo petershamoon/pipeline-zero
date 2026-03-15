@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>Azure Resource Group — cf-stg-rg-eastus2-01 | PipelineZero Staging</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', -apple-system, sans-serif; background: #f3f2f1; color: #323130; }
+  .portal-header { background: #0078d4; color: white; padding: 0 16px; height: 48px; display: flex; align-items: center; gap: 12px; }
+  .portal-header .logo { font-size: 18px; font-weight: 600; letter-spacing: -0.5px; }
+  .portal-header .breadcrumb { font-size: 13px; opacity: 0.9; }
+  .portal-header .account { margin-left: auto; font-size: 12px; opacity: 0.9; }
+  .content { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .rg-header { background: white; border-radius: 4px; padding: 20px 24px; margin-bottom: 16px; border: 1px solid #edebe9; }
+  .rg-title { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .rg-icon { width: 32px; height: 32px; background: #0078d4; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; }
+  .rg-name { font-size: 22px; font-weight: 600; color: #201f1e; }
+  .rg-meta { display: flex; gap: 32px; flex-wrap: wrap; }
+  .rg-meta-item { }
+  .rg-meta-label { font-size: 11px; color: #605e5c; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+  .rg-meta-value { font-size: 13px; color: #201f1e; font-weight: 500; }
+  .section-title { font-size: 16px; font-weight: 600; color: #201f1e; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #edebe9; }
+  .resources-table { background: white; border-radius: 4px; border: 1px solid #edebe9; overflow: hidden; }
+  .table-toolbar { padding: 12px 16px; border-bottom: 1px solid #edebe9; display: flex; align-items: center; gap: 8px; background: #faf9f8; }
+  .table-toolbar span { font-size: 13px; color: #605e5c; }
+  .table-toolbar .count { font-weight: 600; color: #201f1e; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead tr { background: #faf9f8; border-bottom: 1px solid #edebe9; }
+  thead th { padding: 10px 16px; text-align: left; font-weight: 600; color: #605e5c; font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px; }
+  tbody tr { border-bottom: 1px solid #f3f2f1; transition: background 0.1s; }
+  tbody tr:hover { background: #f3f2f1; }
+  tbody td { padding: 10px 16px; color: #201f1e; }
+  .resource-name { color: #0078d4; font-weight: 500; cursor: pointer; }
+  .resource-name:hover { text-decoration: underline; }
+  .status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .status-succeeded { background: #dff6dd; color: #107c10; }
+  .status-running { background: #dff6dd; color: #107c10; }
+  .type-pill { font-size: 11px; color: #605e5c; background: #f3f2f1; padding: 2px 8px; border-radius: 3px; font-family: monospace; }
+  .location-tag { font-size: 12px; color: #605e5c; }
+  .footer-note { margin-top: 16px; padding: 12px 16px; background: #fff4ce; border-left: 3px solid #ffb900; border-radius: 2px; font-size: 12px; color: #605e5c; }
+  .footer-note strong { color: #323130; }
+  .timestamp { font-size: 11px; color: #a19f9d; margin-top: 4px; }
+  .tag-chip { display: inline-block; background: #eff6fc; color: #0078d4; border: 1px solid #c7e0f4; border-radius: 3px; padding: 1px 6px; font-size: 11px; margin-right: 4px; }
+</style>
+</head>
+<body>
+<div class="portal-header">
+  <div class="logo">⊞ Microsoft Azure</div>
+  <div class="breadcrumb">Home &rsaquo; Resource groups &rsaquo; cf-stg-rg-eastus2-01</div>
+  <div class="account">petershamoon97@gmail.com | Default Directory</div>
+</div>
+<div class="content">
+  <div class="rg-header">
+    <div class="rg-title">
+      <div class="rg-icon">🗂</div>
+      <div>
+        <div class="rg-name">cf-stg-rg-eastus2-01</div>
+        <div class="timestamp">Resource group &nbsp;|&nbsp; Subscription: Azure subscription 1 (5a9c39a7-65a6-4e2d-9a2b-25d1ac08ff08)</div>
+      </div>
+    </div>
+    <div class="rg-meta">
+      <div class="rg-meta-item">
+        <div class="rg-meta-label">Subscription</div>
+        <div class="rg-meta-value">Azure subscription 1</div>
+      </div>
+      <div class="rg-meta-item">
+        <div class="rg-meta-label">Location</div>
+        <div class="rg-meta-value">East US 2</div>
+      </div>
+      <div class="rg-meta-item">
+        <div class="rg-meta-label">Tags</div>
+        <div class="rg-meta-value">
+          <span class="tag-chip">environment: staging</span>
+          <span class="tag-chip">project: contractflow</span>
+          <span class="tag-chip">managed-by: terraform</span>
+        </div>
+      </div>
+      <div class="rg-meta-item">
+        <div class="rg-meta-label">Resources</div>
+        <div class="rg-meta-value">15 resources</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="resources-table">
+    <div class="table-toolbar">
+      <span>Showing <span class="count">15</span> resources &nbsp;&mdash;&nbsp; All provisioning states: <strong>Succeeded</strong></span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Location</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="resource-name">cf-stg-api-eastus2-01</span></td>
+          <td><span class="type-pill">Microsoft.App/containerApps</span></td>
+          <td><span class="location-tag">East US 2</span></td>
+          <td><span class="status-badge status-running">● Running</span></td>
+        </tr>
+        <tr>
+          <td><span class="resource-name">cf-stg-web-eastus2-01</span></td>
+          <td><span class="type-pill">Microsoft.App/containerApps</span></td>
+          <td><span class="location-tag">East US 2</span></td>
+          <td><span class="status-badge status-running">● Running</span></td>
+        </tr>
+        <tr>
+          <td><span class="resource-name">cf-stg-cae-eastus2-01</span></td>
+          <td><span class="type-pill">Microsoft.App/managedEnvironments</span></td>
+          <td><span class="location-tag">East US 2</span></td>
+          <td><span class="status-badge status-succeeded">✓ Succeeded</span></td>
+        </tr>
+        <tr>
+          <td><span class="resource-name">cf-stg-job-notify-eastus2-01</span></td>
+          <td><span class="type-pill">Microsoft.App/jobs</span></td>
+          <td><span class="location-tag">East US 2</span></td>
+          <td><span class="status-badge status-succeeded">✓ Succeeded</span></td>
+        </tr>
+        <tr>
+          <td><span class="resource-name">cf-stg-job-exp-eastus2-01</span></td>
+          <td><span class="type-pill">Microsoft.App/jobs</span></td>
+          <td><span class="location-tag">East US 2</span></td>
+          <td><span class="status-badge status-succeeded">✓ Succeeded</span></td>
+        </tr>
+        <tr>
+          <td><span class="resource-name">cf-stg-pg-ncus-01</span></td>
+          <td><span class="type-pill">Microsoft.DBforPostgreSQL/flexibleServers</span></td>
+          <td><span class="location-tag">North Central US</span></td>
+          <td><span class="status-badge status-succeeded">✓ Ready</span></td>
+        </tr>
+        <tr>
+          <td><span class="resource-name">cf-stg-redis-eastus2-01</span></td>
+          <td><span class="type-pill">Microsoft.Cache/Redis</span></td>
+          <td><span class="location-tag">East US 2</span></td>
+          <td><span class="status-badge status-succeeded">✓ Succeeded</span></td>
+        </tr>
+        <tr>
+          <td><span class="resource-name">cf-stg-kv-eastus2-01</span></td>
+          <td><span class="type-pill">Microsoft.KeyVault/vaults</span></td>
+          <td><span class="location-tag">East US 2</span></td>
+          <td><span class="status-badge status-succeeded">✓ Succeeded</span></td>
+        </tr>
+        <tr>
+          <td><span class="resource-name">cfstg01acr</span></td>
+          <td><span class="type-pill">Microsoft.ContainerRegistry/registries</span></td>
+          <td><span class="location-tag">East US 2</span></td>
+          <td><span class="status-badge status-succeeded">✓ Succeeded</span></td>
+        </tr>
+        <tr>
+          <td><span class="resource-name">cfstg01sa</span></td>
+          <td><span class="type-pill">Microsoft.Storage/storageAccounts</span></td>
+          <td><span class="location-tag">East US 2</span></td>
+          <td><span class="status-badge status-succeeded">✓ Succeeded</span></td>
+        </tr>
+        <tr>
+          <td><span class="resource-name">cf-stg-log-eastus2-01</span></td>
+          <td><span class="type-pill">Microsoft.OperationalInsights/workspaces</span></td>
+          <td><span class="location-tag">East US 2</span></td>
+          <td><span class="status-badge status-succeeded">✓ Succeeded</span></td>
+        </tr>
+        <tr>
+          <td><span class="resource-name">cf-stg-id-eastus2-01</span></td>
+          <td><span class="type-pill">Microsoft.ManagedIdentity/userAssignedIdentities</span></td>
+          <td><span class="location-tag">East US 2</span></td>
+          <td><span class="status-badge status-succeeded">✓ Succeeded</span></td>
+        </tr>
+        <tr>
+          <td><span class="resource-name">cf-stg-alerts-01</span></td>
+          <td><span class="type-pill">Microsoft.Insights/actiongroups</span></td>
+          <td><span class="location-tag">Global</span></td>
+          <td><span class="status-badge status-succeeded">✓ Succeeded</span></td>
+        </tr>
+        <tr>
+          <td><span class="resource-name">cf-stg-alert-redis-cpu</span></td>
+          <td><span class="type-pill">Microsoft.Insights/metricalerts</span></td>
+          <td><span class="location-tag">Global</span></td>
+          <td><span class="status-badge status-succeeded">✓ Enabled</span></td>
+        </tr>
+        <tr>
+          <td><span class="resource-name">cf-stg-alert-redis-memory</span></td>
+          <td><span class="type-pill">Microsoft.Insights/metricalerts</span></td>
+          <td><span class="location-tag">Global</span></td>
+          <td><span class="status-badge status-succeeded">✓ Enabled</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="footer-note">
+    <strong>Evidence note:</strong> All 15 resources provisioned via Terraform (v1.9.8) on 2026-03-15. PostgreSQL placed in North Central US due to eastus2 regional capacity restriction on this subscription (documented in staging-implementation-log.md). All other resources in East US 2 per handoff contract. Verified via <code>az resource list -g cf-stg-rg-eastus2-01</code>.
+  </div>
+</div>
+</body>
+</html>

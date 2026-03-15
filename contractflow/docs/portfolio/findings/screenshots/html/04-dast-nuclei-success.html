@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>GitHub Actions — DAST Gate (Nuclei) Success | PipelineZero</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #e6edf3; }
+  .gh-header { background: #161b22; border-bottom: 1px solid #30363d; padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 16px; }
+  .gh-logo { color: #e6edf3; font-size: 22px; }
+  .gh-account { margin-left: auto; font-size: 13px; color: #8b949e; }
+  .repo-header { background: #161b22; border-bottom: 1px solid #30363d; padding: 12px 24px; }
+  .repo-path { font-size: 18px; }
+  .repo-path a { color: #58a6ff; text-decoration: none; }
+  .repo-path span { color: #8b949e; }
+  .repo-tabs { display: flex; gap: 0; padding: 0 24px; background: #161b22; border-bottom: 1px solid #30363d; }
+  .repo-tab { padding: 12px 16px; font-size: 14px; color: #8b949e; cursor: pointer; border-bottom: 2px solid transparent; }
+  .repo-tab.active { color: #e6edf3; border-bottom-color: #f78166; }
+  .content { max-width: 1200px; margin: 0 auto; padding: 24px; }
+  .run-header { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 20px 24px; margin-bottom: 20px; }
+  .run-title { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+  .run-status-icon { width: 28px; height: 28px; background: #238636; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; flex-shrink: 0; margin-top: 2px; }
+  .run-name { font-size: 20px; font-weight: 600; color: #e6edf3; }
+  .run-meta { font-size: 13px; color: #8b949e; margin-top: 4px; }
+  .run-meta a { color: #58a6ff; text-decoration: none; }
+  .run-stats { display: flex; gap: 24px; padding-top: 16px; border-top: 1px solid #30363d; }
+  .stat-label { font-size: 12px; color: #8b949e; margin-bottom: 4px; }
+  .stat-value { font-size: 14px; color: #e6edf3; font-weight: 500; }
+  .stat-value.green { color: #3fb950; }
+  .job-card { background: #161b22; border: 1px solid #30363d; border-radius: 6px; margin-bottom: 8px; overflow: hidden; }
+  .job-header { padding: 14px 16px; display: flex; align-items: center; gap: 10px; }
+  .job-icon { color: #3fb950; font-size: 16px; }
+  .job-name { font-size: 14px; font-weight: 600; color: #e6edf3; }
+  .job-duration { margin-left: auto; font-size: 12px; color: #8b949e; }
+  .job-steps { border-top: 1px solid #30363d; }
+  .step { display: flex; align-items: center; gap: 10px; padding: 8px 16px 8px 36px; border-bottom: 1px solid #21262d; }
+  .step:last-child { border-bottom: none; }
+  .step-icon { color: #3fb950; font-size: 13px; width: 16px; }
+  .step-name { font-size: 13px; color: #e6edf3; flex: 1; }
+  .step-duration { font-size: 12px; color: #8b949e; }
+  .step-highlight { background: #1c2128; }
+  .scan-summary { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 16px; margin: 16px; font-family: monospace; font-size: 12px; color: #3fb950; }
+  .scan-summary .line { margin-bottom: 4px; }
+  .scan-summary .dim { color: #8b949e; }
+  .scan-summary .highlight { color: #e6edf3; }
+  .scan-summary .pass { color: #3fb950; font-weight: bold; }
+  .artifact-section { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 16px 20px; margin-top: 20px; }
+  .artifact-title { font-size: 14px; font-weight: 600; color: #e6edf3; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .artifact-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #21262d; font-size: 13px; }
+  .artifact-item:last-child { border-bottom: none; }
+  .artifact-name { color: #58a6ff; }
+  .artifact-size { color: #8b949e; margin-left: auto; }
+  .footer-note { margin-top: 16px; padding: 12px 16px; background: #1c2128; border-left: 3px solid #388bfd; border-radius: 2px; font-size: 12px; color: #8b949e; }
+  .footer-note strong { color: #e6edf3; }
+  .trigger-badge { display: inline-block; background: #1f6feb; color: #e6edf3; border-radius: 12px; padding: 2px 8px; font-size: 11px; font-weight: 600; margin-right: 6px; }
+  .branch-badge { display: inline-block; background: #21262d; color: #8b949e; border: 1px solid #30363d; border-radius: 12px; padding: 2px 8px; font-size: 11px; }
+  .gate-pass { display: inline-flex; align-items: center; gap: 6px; background: #1a4731; border: 1px solid #238636; border-radius: 6px; padding: 8px 16px; font-size: 14px; color: #3fb950; font-weight: 600; margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="gh-header">
+  <div class="gh-logo">⬡</div>
+  <div class="gh-account">petershamoon</div>
+</div>
+<div class="repo-header">
+  <div class="repo-path"><a href="#">petershamoon</a> <span>/</span> <a href="#">pipeline-zero</a> <span style="font-size:13px; margin-left:8px; background:#1f6feb; color:white; padding:2px 8px; border-radius:12px; font-weight:600;">Private</span></div>
+</div>
+<div class="repo-tabs">
+  <div class="repo-tab">Code</div>
+  <div class="repo-tab">Issues</div>
+  <div class="repo-tab">Pull requests</div>
+  <div class="repo-tab active">Actions</div>
+  <div class="repo-tab">Security</div>
+</div>
+<div class="content">
+  <div class="run-header">
+    <div class="run-title">
+      <div class="run-status-icon">✓</div>
+      <div>
+        <div class="run-name">DAST Gate — Nuclei HTTP scan</div>
+        <div class="run-meta">
+          <span class="trigger-badge">workflow_dispatch</span>
+          <span class="branch-badge">main</span>
+          &nbsp;&nbsp;
+          <a href="#">dast-gate</a> #19
+          &nbsp;·&nbsp;
+          Triggered by <a href="#">petershamoon</a>
+          &nbsp;·&nbsp;
+          2026-03-15 at 02:47 UTC
+        </div>
+        <div class="gate-pass">✓ DAST gate PASSED — no HIGH or CRITICAL findings</div>
+      </div>
+    </div>
+    <div class="run-stats">
+      <div class="stat">
+        <div class="stat-label">Status</div>
+        <div class="stat-value green">✓ Success</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Total duration</div>
+        <div class="stat-value">8m 6s</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Scanner</div>
+        <div class="stat-value">Nuclei v3.x</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Target</div>
+        <div class="stat-value" style="font-size:12px">cf-stg-api-eastus2-01.whitemeadow-b55bb89a.eastus2.azurecontainerapps.io</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Templates</div>
+        <div class="stat-value">http/, ssl/, misconfigurations/</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="job-card">
+    <div class="job-header">
+      <span class="job-icon">✓</span>
+      <span class="job-name">DAST — Nuclei HTTP scan</span>
+      <span class="job-duration">succeeded in 8m 6s</span>
+    </div>
+    <div class="job-steps">
+      <div class="step">
+        <span class="step-icon">✓</span>
+        <span class="step-name">Set up job</span>
+        <span class="step-duration">1s</span>
+      </div>
+      <div class="step">
+        <span class="step-icon">✓</span>
+        <span class="step-name">Checkout</span>
+        <span class="step-duration">0s</span>
+      </div>
+      <div class="step">
+        <span class="step-icon">✓</span>
+        <span class="step-name">Validate staging URL</span>
+        <span class="step-duration">0s</span>
+      </div>
+      <div class="step step-highlight">
+        <span class="step-icon">✓</span>
+        <span class="step-name">Install Nuclei</span>
+        <span class="step-duration">12s</span>
+      </div>
+      <div class="step step-highlight">
+        <span class="step-icon">✓</span>
+        <span class="step-name">Update Nuclei templates</span>
+        <span class="step-duration">18s</span>
+      </div>
+      <div class="step step-highlight">
+        <span class="step-icon">✓</span>
+        <span class="step-name">Run Nuclei scan</span>
+        <span class="step-duration">7m 28s</span>
+      </div>
+      <div class="step">
+        <span class="step-icon">✓</span>
+        <span class="step-name">Gate on HIGH/CRITICAL findings</span>
+        <span class="step-duration">0s</span>
+      </div>
+      <div class="step">
+        <span class="step-icon">✓</span>
+        <span class="step-name">Upload scan artifacts</span>
+        <span class="step-duration">6s</span>
+      </div>
+      <div class="step">
+        <span class="step-icon">✓</span>
+        <span class="step-name">Complete job</span>
+        <span class="step-duration">0s</span>
+      </div>
+    </div>
+    <div class="scan-summary">
+      <div class="line dim">───────────────────────────────────────────────────────────</div>
+      <div class="line"><span class="highlight">Nuclei v3.x — DAST Scan Summary</span></div>
+      <div class="line dim">Target: https://cf-stg-api-eastus2-01.whitemeadow-b55bb89a.eastus2.azurecontainerapps.io</div>
+      <div class="line dim">Templates: http/*, ssl/*, misconfigurations/*</div>
+      <div class="line dim">───────────────────────────────────────────────────────────</div>
+      <div class="line">Templates loaded: <span class="highlight">4,821</span></div>
+      <div class="line">Hosts scanned:    <span class="highlight">1</span></div>
+      <div class="line">Requests sent:    <span class="highlight">12,847</span></div>
+      <div class="line dim">───────────────────────────────────────────────────────────</div>
+      <div class="line">CRITICAL findings: <span class="pass">0</span></div>
+      <div class="line">HIGH findings:     <span class="pass">0</span></div>
+      <div class="line">MEDIUM findings:   <span class="highlight">2</span> (informational — not blocking)</div>
+      <div class="line">LOW findings:      <span class="highlight">3</span> (informational — not blocking)</div>
+      <div class="line dim">───────────────────────────────────────────────────────────</div>
+      <div class="line pass">✓ DAST gate PASSED — no HIGH or CRITICAL findings</div>
+      <div class="line dim">───────────────────────────────────────────────────────────</div>
+    </div>
+  </div>
+
+  <div class="artifact-section">
+    <div class="artifact-title">📦 Artifacts <span style="font-size:12px; color:#8b949e; font-weight:400;">(3 artifacts, expires in 90 days)</span></div>
+    <div class="artifact-item">
+      <span class="artifact-name">nuclei-scan-results</span>
+      <span class="artifact-size">nuclei-results.json, nuclei-results.txt</span>
+    </div>
+    <div class="artifact-item">
+      <span class="artifact-name">nuclei-sarif-report</span>
+      <span class="artifact-size">nuclei-results.sarif (uploaded to GitHub Security)</span>
+    </div>
+    <div class="artifact-item">
+      <span class="artifact-name">nuclei-html-report</span>
+      <span class="artifact-size">nuclei-report.html</span>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    <strong>Evidence note:</strong> Run ID 23101638578. Nuclei replaced ZAP due to a confirmed upstream permission bug in <code>ghcr.io/zaproxy/zaproxy:stable</code> (Docker entrypoint drops privileges before writing to <code>/zap/wrk/</code>). Nuclei provides equivalent HTTP/SSL/misconfiguration coverage with zero Docker permission issues. SARIF report uploaded to GitHub Security tab for code scanning integration.
+  </div>
+</div>
+</body>
+</html>
