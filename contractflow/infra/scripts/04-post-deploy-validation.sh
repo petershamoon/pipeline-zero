@@ -63,7 +63,8 @@ az monitor metrics alert list -g "$RG" --query "[].{name:name, severity:severity
 
 echo ""
 echo "=== Step 9: Set STAGING_BASE_URL ==="
-REPO="petershamoon/aiuc1-soc2-compliance-lab"
+# Updated 2026-03-14: repo changed from aiuc1-soc2-compliance-lab to pipeline-zero
+REPO="petershamoon/pipeline-zero"
 echo "Setting STAGING_BASE_URL to https://$FRONTEND_FQDN"
 gh secret set STAGING_BASE_URL --repo "$REPO" --env staging --body "https://$FRONTEND_FQDN" 2>/dev/null || echo "WARNING: Could not set STAGING_BASE_URL (gh auth may be needed)"
 

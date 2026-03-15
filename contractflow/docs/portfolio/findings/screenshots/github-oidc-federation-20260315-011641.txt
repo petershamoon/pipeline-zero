@@ -1,0 +1,2 @@
+=== Step 1: Create GitHub Deploy App Registration ===
+ERROR: Insufficient privileges to complete the operation.

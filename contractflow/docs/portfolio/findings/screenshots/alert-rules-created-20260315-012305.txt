@@ -1,0 +1,89 @@
+=== Creating Metric Alert Rules ===
+Creating Redis memory alert...
+{
+  "actions": [
+    {
+      "actionGroupId": "/subscriptions/5a9c39a7-65a6-4e2d-9a2b-25d1ac08ff08/resourceGroups/cf-stg-rg-eastus2-01/providers/microsoft.insights/actionGroups/cf-stg-alerts-01"
+    }
+  ],
+  "criteria": {
+    "allOf": [
+      {
+        "criterionType": "StaticThresholdCriterion",
+        "metricName": "UsedMemoryPercentage",
+        "name": "cond0",
+        "operator": "GreaterThan",
+        "threshold": 80.0,
+        "timeAggregation": "Average"
+      }
+    ],
+    "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria"
+  },
+  "description": "Redis memory usage exceeds 80% in staging",
+  "enabled": true,
+  "evaluationFrequency": "PT1M",
+  "id": "/subscriptions/5a9c39a7-65a6-4e2d-9a2b-25d1ac08ff08/resourceGroups/cf-stg-rg-eastus2-01/providers/Microsoft.Insights/metricAlerts/cf-stg-alert-redis-memory",
+  "location": "global",
+  "name": "cf-stg-alert-redis-memory",
+  "resourceGroup": "cf-stg-rg-eastus2-01",
+  "scopes": [
+    "/subscriptions/5a9c39a7-65a6-4e2d-9a2b-25d1ac08ff08/resourceGroups/cf-stg-rg-eastus2-01/providers/Microsoft.Cache/Redis/cf-stg-redis-eastus2-01"
+  ],
+  "severity": 2,
+  "tags": {
+    "environment": "staging",
+    "managed_by": "terraform",
+    "project": "contractflow"
+  },
+  "type": "Microsoft.Insights/metricAlerts",
+  "windowSize": "PT5M"
+}
+  Redis memory alert created
+Creating Redis CPU alert...
+{
+  "actions": [
+    {
+      "actionGroupId": "/subscriptions/5a9c39a7-65a6-4e2d-9a2b-25d1ac08ff08/resourceGroups/cf-stg-rg-eastus2-01/providers/microsoft.insights/actionGroups/cf-stg-alerts-01"
+    }
+  ],
+  "criteria": {
+    "allOf": [
+      {
+        "criterionType": "StaticThresholdCriterion",
+        "metricName": "percentProcessorTime",
+        "name": "cond0",
+        "operator": "GreaterThan",
+        "threshold": 90.0,
+        "timeAggregation": "Average"
+      }
+    ],
+    "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria"
+  },
+  "description": "Redis CPU exceeds 90% in staging",
+  "enabled": true,
+  "evaluationFrequency": "PT1M",
+  "id": "/subscriptions/5a9c39a7-65a6-4e2d-9a2b-25d1ac08ff08/resourceGroups/cf-stg-rg-eastus2-01/providers/Microsoft.Insights/metricAlerts/cf-stg-alert-redis-cpu",
+  "location": "global",
+  "name": "cf-stg-alert-redis-cpu",
+  "resourceGroup": "cf-stg-rg-eastus2-01",
+  "scopes": [
+    "/subscriptions/5a9c39a7-65a6-4e2d-9a2b-25d1ac08ff08/resourceGroups/cf-stg-rg-eastus2-01/providers/Microsoft.Cache/Redis/cf-stg-redis-eastus2-01"
+  ],
+  "severity": 2,
+  "tags": {
+    "environment": "staging",
+    "managed_by": "terraform",
+    "project": "contractflow"
+  },
+  "type": "Microsoft.Insights/metricAlerts",
+  "windowSize": "PT5M"
+}
+  Redis CPU alert created
+
+=== Alert Rules Summary ===
+Name
+-------------------------
+cf-stg-alert-redis-memory
+cf-stg-alert-redis-cpu
+
+=== DONE ===

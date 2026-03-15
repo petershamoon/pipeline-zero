@@ -4,7 +4,8 @@
 # Prerequisites: source .env.staging, az login done.
 set -euo pipefail
 
-GITHUB_REPO="petershamoon/aiuc1-soc2-compliance-lab"
+# Updated 2026-03-14: repo changed from aiuc1-soc2-compliance-lab to pipeline-zero
+GITHUB_REPO="petershamoon/pipeline-zero"
 
 echo "=== Step 1: Create GitHub Deploy App Registration ==="
 

@@ -1,0 +1,18 @@
+=== LOG ANALYTICS WORKSPACE ===
+Name                   CustomerId                            Sku
+---------------------  ------------------------------------  ---------
+cf-stg-log-eastus2-01  80b4884d-e6c8-48ca-92a0-96b50703bb53  PerGB2018
+
+=== ALERT RULES ===
+WARNING: Preview version of extension is disabled by default for extension installation, enabled for modules without stable versions. 
+WARNING: Please run 'az config set extension.dynamic_install_allow_preview=true or false' to config it specifically. 
+The command requires the extension alertsmanagement. Do you want to install it now? The command will continue to run after the extension is installed. (Y/n): WARNING: Run 'az config set extension.use_dynamic_install=yes_without_prompt' to allow installing extensions without prompt.
+WARNING: No stable version of 'alertsmanagement' to install. Preview versions allowed.
+WARNING: The installed extension 'alertsmanagement' is in preview.
+WARNING: Command group 'monitor alert-processing-rule' is in preview and under development. Reference and support levels: https://aka.ms/CLI_refstatus
+
+
+=== ACTION GROUPS ===
+Name              Email
+----------------  ---------------------------
+cf-stg-alerts-01  petershamoon@protonmail.com

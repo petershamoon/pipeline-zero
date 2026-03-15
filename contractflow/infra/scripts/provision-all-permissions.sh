@@ -30,7 +30,8 @@ echo ""
 # ─── Known constants from handoff docs ───
 TENANT_ID="5d30251d-6d7e-4c8f-849f-90a5c29b3b16"
 SUBSCRIPTION_ID="5a9c39a7-65a6-4e2d-9a2b-25d1ac08ff08"
-GITHUB_REPO="petershamoon/aiuc1-soc2-compliance-lab"
+# Updated 2026-03-14: repo changed from aiuc1-soc2-compliance-lab to pipeline-zero
+GITHUB_REPO="petershamoon/pipeline-zero"
 EXISTING_SP_APP_ID="8fc64ab2-ee80-4e15-a386-c9ba8650dcaf"
 
 # ─── Verify we're logged in ───

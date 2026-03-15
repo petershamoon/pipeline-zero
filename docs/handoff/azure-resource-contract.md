@@ -43,7 +43,19 @@ Required tags on every resource:
 - Production baseline: `contractflow/infra/envs/production/terraform.tfvars.example`
 
 ## Open items
-- `BLOCKED` (Owner: Manus, Due: 2026-03-15): final concrete values for each `resource_names.*` output after first staging `terraform apply`.
+- `RESOLVED` (Owner: Manus, Date: 2026-03-14): final concrete values for each `resource_names.*` output after first staging `terraform apply`.
+  - `acr`: cfstg01acr
+  - `backend_container_app`: cf-stg-api-eastus2-01
+  - `container_env`: cf-stg-cae-eastus2-01
+  - `expiration_job`: cf-stg-job-exp-eastus2-01
+  - `frontend_container_app`: cf-stg-web-eastus2-01
+  - `key_vault`: cf-stg-kv-eastus2-01
+  - `log_analytics_workspace`: cf-stg-log-eastus2-01
+  - `notification_job`: cf-stg-job-notify-eastus2-01
+  - `postgres_server`: cf-stg-pg-ncus-01 (Note: provisioned in northcentralus due to eastus2 restrictions)
+  - `redis_cache`: cf-stg-redis-eastus2-01
+  - `resource_group`: cf-stg-rg-eastus2-01
+  - `storage_account`: cfstg01sa
 
 ## Failure fallback
 - If private networking blocks initial delivery, temporary public ingress may be used in staging only with IP restrictions and explicit expiration date.

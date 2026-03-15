@@ -1,0 +1,25 @@
+=== KEY VAULT ROLE ASSIGNMENTS ===
+Role                     PrincipalType
+-----------------------  ----------------
+Key Vault Administrator  ServicePrincipal
+Key Vault Secrets User   ServicePrincipal
+
+=== ACR ROLE ASSIGNMENTS ===
+Role
+-------
+AcrPull
+
+=== STORAGE ROLE ASSIGNMENTS ===
+Role
+-----------------------------
+Storage Blob Data Contributor
+
+=== BACKEND CONTAINER APP CONFIG ===
+Name                   Fqdn                                                                      Image                                                        Identity
+---------------------  ------------------------------------------------------------------------  -----------------------------------------------------------  ------------
+cf-stg-api-eastus2-01  cf-stg-api-eastus2-01.whitemeadow-b55bb89a.eastus2.azurecontainerapps.io  mcr.microsoft.com/azuredocs/containerapps-helloworld:latest  UserAssigned
+
+=== FRONTEND CONTAINER APP CONFIG ===
+Name                   Fqdn                                                                      Image
+---------------------  ------------------------------------------------------------------------  -----------------------------------------------------------
+cf-stg-web-eastus2-01  cf-stg-web-eastus2-01.whitemeadow-b55bb89a.eastus2.azurecontainerapps.io  mcr.microsoft.com/azuredocs/containerapps-helloworld:latest

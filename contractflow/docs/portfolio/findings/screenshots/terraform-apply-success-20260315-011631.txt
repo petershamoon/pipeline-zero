@@ -1,0 +1,49 @@
+=== TERRAFORM APPLY SUCCESS - 2026-03-15 01:16:31 UTC ===
+
+Apply complete! Resources: 4 added, 0 changed, 0 destroyed.
+
+=== TERRAFORM OUTPUTS (non-sensitive) ===
+{
+  "acr_login_server": "cfstg01acr.azurecr.io",
+  "app_settings_contract": "[REDACTED]",
+  "backend_fqdn": "cf-stg-api-eastus2-01.whitemeadow-b55bb89a.eastus2.azurecontainerapps.io",
+  "backend_identity_client_id": "9c7f4b22-5451-4f6d-9ea9-aa71681c56c3",
+  "backend_identity_principal_id": "cf95b968-6e7e-48ce-b8cc-d647f63b83d8",
+  "frontend_fqdn": "cf-stg-web-eastus2-01.whitemeadow-b55bb89a.eastus2.azurecontainerapps.io",
+  "key_vault_uri": "https://cf-stg-kv-eastus2-01.vault.azure.net/",
+  "postgres_fqdn": "cf-stg-pg-ncus-01.postgres.database.azure.com",
+  "redis_hostname": "cf-stg-redis-eastus2-01.redis.cache.windows.net",
+  "resource_names": {
+    "acr": "cfstg01acr",
+    "backend_container_app": "cf-stg-api-eastus2-01",
+    "container_env": "cf-stg-cae-eastus2-01",
+    "expiration_job": "cf-stg-job-exp-eastus2-01",
+    "frontend_container_app": "cf-stg-web-eastus2-01",
+    "key_vault": "cf-stg-kv-eastus2-01",
+    "log_analytics_workspace": "cf-stg-log-eastus2-01",
+    "notification_job": "cf-stg-job-notify-eastus2-01",
+    "postgres_server": "cf-stg-pg-ncus-01",
+    "redis_cache": "cf-stg-redis-eastus2-01",
+    "resource_group": "cf-stg-rg-eastus2-01",
+    "storage_account": "cfstg01sa"
+  },
+  "resource_prefix": "cf-stg",
+  "storage_primary_blob_endpoint": "https://cfstg01sa.blob.core.windows.net/"
+}
+
+=== AZURE RESOURCE LIST - cf-stg-rg-eastus2-01 ===
+Name                          Location
+----------------------------  --------------
+cf-stg-alerts-01              global
+cf-stg-id-eastus2-01          eastus2
+cf-stg-redis-eastus2-01       eastus2
+cfstg01sa                     eastus2
+cfstg01acr                    eastus2
+cf-stg-log-eastus2-01         eastus2
+cf-stg-cae-eastus2-01         eastus2
+cf-stg-web-eastus2-01         eastus2
+cf-stg-pg-ncus-01             northcentralus
+cf-stg-kv-eastus2-01          eastus2
+cf-stg-job-notify-eastus2-01  eastus2
+cf-stg-job-exp-eastus2-01     eastus2
+cf-stg-api-eastus2-01         eastus2

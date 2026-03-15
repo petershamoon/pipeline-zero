@@ -90,7 +90,8 @@ locals {
     frontend_container_app  = "${local.resource_prefix}-web-${var.location}-${var.sequence_number}"
     expiration_job          = "${local.resource_prefix}-job-exp-${var.location}-${var.sequence_number}"
     notification_job        = "${local.resource_prefix}-job-notify-${var.location}-${var.sequence_number}"
-    postgres_server         = "${local.resource_prefix}-pg-${var.location}-${var.sequence_number}"
+    # 2026-03-14: postgres is in northcentralus (eastus2 restricted); name uses ncus to avoid location conflict
+    postgres_server         = "${local.resource_prefix}-pg-ncus-${var.sequence_number}"
     redis_cache             = "${local.resource_prefix}-redis-${var.location}-${var.sequence_number}"
     storage_account         = "${replace(local.resource_prefix, "-", "")}${var.sequence_number}sa"
     key_vault               = "${local.resource_prefix}-kv-${var.location}-${var.sequence_number}"
@@ -225,7 +226,10 @@ resource "azurerm_storage_container" "contracts" {
 resource "azurerm_postgresql_flexible_server" "main" {
   name                          = local.resource_names.postgres_server
   resource_group_name           = azurerm_resource_group.main.name
-  location                      = azurerm_resource_group.main.location
+  # 2026-03-14: eastus2 is LocationIsOfferRestricted for PostgreSQL Flexible Server
+  # on this Azure subscription. Using northcentralus as documented exception.
+  # All other resources remain in eastus2. Ref: handoff/azure-resource-contract.md fallback policy.
+  location                      = "northcentralus"
   version                       = "16"
   administrator_login           = "cfadmin"
   administrator_password        = var.postgres_admin_password
@@ -234,7 +238,7 @@ resource "azurerm_postgresql_flexible_server" "main" {
   backup_retention_days         = 7
   geo_redundant_backup_enabled  = false
   public_network_access_enabled = true # staging fallback — restrict in production
-  zone                          = "1"
+  # 2026-03-14: northcentralus does not support zone=1; removed zone constraint (no-preference)
   tags                          = local.all_tags
 }
 
@@ -275,7 +279,8 @@ resource "azurerm_redis_cache" "main" {
 # ─────────────────────────────────────────────
 
 resource "azurerm_user_assigned_identity" "backend" {
-  name                = "${local.resource_prefix}-id-api-${var.location}-${var.sequence_number}"
+  # Updated 2026-03-14: renamed from id-api to id to match handoff contract (cf-stg-id-eastus2-01)
+  name                = "${local.resource_prefix}-id-${var.location}-${var.sequence_number}"
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   tags                = local.all_tags

@@ -1,0 +1,21 @@
+=== Building backend image ===
+30dad65d3b24: Verifying Checksum
+30dad65d3b24: Download complete
+b9aab63c297c: Verifying Checksum
+b9aab63c297c: Download complete
+5d7ccc6599a6: Verifying Checksum
+5d7ccc6599a6: Download complete
+206356c42440: Verifying Checksum
+206356c42440: Download complete
+206356c42440: Pull complete
+30dad65d3b24: Pull complete
+5d7ccc6599a6: Pull complete
+b9aab63c297c: Pull complete
+Digest: sha256:ccc7089399c8bb65dd1fb3ed6d55efa538a3f5e7fca3f5988ac3b5b87e593bf0
+Status: Downloaded newer image for python:3.12-slim
+ ---> 6f90d4a79e7a
+Step 2/14 : RUN apt-get update && apt-get install -y --no-install-recommends libmagic1 && rm -rf /var/lib/apt/lists/*
+ ---> Running in 5d9dfdb9b0bd
+failed to set up container networking: failed to create endpoint tender_mcclintock on network bridge: Unable to enable DIRECT ACCESS FILTERING - DROP rule:  (iptables failed: iptables --wait -t raw -A PREROUTING -d 172.17.0.2 ! -i docker0 -j DROP: iptables v1.8.7 (legacy): can't initialize iptables table `raw': Table does not exist (do you need to insmod?)
+Perhaps iptables or your kernel needs to be upgraded.
+ (exit status 3))
