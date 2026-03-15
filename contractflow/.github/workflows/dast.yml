@@ -29,12 +29,12 @@ jobs:
           echo "Target: $STAGING_BASE_URL"
 
       - name: Run ZAP baseline scan
-        # -I: do not fail on warnings, only fail on FAIL rules
-        # -l WARN: log warnings and above
-        # -z: additional ZAP options (ajax spider disabled for baseline)
+        # ZAP runs as non-root inside the container; use a world-writable temp dir
+        # then copy reports back to GITHUB_WORKSPACE for upload.
         run: |
+          mkdir -p /tmp/zap-work && chmod 777 /tmp/zap-work
           docker run --rm \
-            -v "$PWD:/zap/wrk" \
+            -v "/tmp/zap-work:/zap/wrk:rw" \
             -e ZAP_AUTH_HEADER="" \
             ghcr.io/zaproxy/zaproxy:stable \
             zap-baseline.py \
@@ -44,8 +44,10 @@ jobs:
               -w zap-report.md \
               -m 5 \
               -l WARN \
-              -I \
-              --auto
+              -I
+          cp /tmp/zap-work/zap-report.html . || true
+          cp /tmp/zap-work/zap-report.json . || true
+          cp /tmp/zap-work/zap-report.md   . || true
         continue-on-error: true
         id: zap_scan
 
