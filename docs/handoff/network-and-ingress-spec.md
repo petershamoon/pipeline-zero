@@ -36,8 +36,8 @@ Last updated: 2026-03-08
 - Postgres/Redis/Blob do not expose broad public ingress.
 
 ## Open items
-- `BLOCKED` (Owner: Manus, Due: 2026-03-15): confirm final staging ingress mode (private vs restricted public) for backend container app.
-- `BLOCKED` (Owner: Manus, Due: 2026-03-22): finalize production DNS/custom domain and certificate management path.
+- *RESOLVED (2026-03-15)*: Staging ingress mode for backend container app is set to **restricted public** (`external = true`) to allow GitHub Actions DAST scanning and health checks to reach the API directly. CORS is strictly enforced via `ALLOWED_ORIGINS`.
+- `BLOCKED` (Owner: Pete/Claude, Due: 2026-03-22): finalize production DNS/custom domain and certificate management path.
 
 ## Rollback/fallback notes
 - If private ingress blocks staging validation, allow temporary restricted public ingress in staging with owner and expiration date recorded.

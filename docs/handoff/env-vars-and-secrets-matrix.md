@@ -56,8 +56,8 @@ Last updated: 2026-03-08
 - Emergency rotation SLA: within 4 hours of confirmed compromise.
 
 ## Open items
-- `BLOCKED` (Owner: Manus, Due: 2026-03-15): set all cloud secret values in staging Key Vault and GitHub environments.
-- `BLOCKED` (Owner: Manus, Due: 2026-03-22): mirror validated staging values into production with environment approvals.
+- *RESOLVED (2026-03-15)*: All cloud secret values set in staging Key Vault (8 secrets) and GitHub staging environment (9 secrets).
+- `BLOCKED` (Owner: Pete/Claude, Due: 2026-03-22): mirror validated staging values into production with environment approvals.
 
 ## Rollback/fallback notes
 - If a rotated secret causes runtime failure, revert the affected Key Vault secret version and redeploy the previous working revision.

@@ -23,6 +23,6 @@ This folder is the implementation contract for all Azure work.
 - Unresolved values are marked `BLOCKED` with owner and due date.
 
 ## Current block list
-- `BLOCKED` (Owner: Manus, Due: 2026-03-15): final Azure resource names from `terraform apply` outputs.
-- `BLOCKED` (Owner: Manus, Due: 2026-03-15): Entra app registration IDs and redirect URIs.
-- `BLOCKED` (Owner: Manus, Due: 2026-03-15): GitHub OIDC federated credential subject mappings using actual repo slug.
+- *All initial BLOCKED items resolved by Manus on 2026-03-15.*
+- `BLOCKED` (Owner: Pete/Claude, Due: 2026-03-22): Application code needs to implement `/health` and `/health/ready` endpoints for the GitHub Actions smoke tests to pass.
+- `BLOCKED` (Owner: Pete/Claude, Due: 2026-03-22): Database migration scripts need to be finalized and run against the staging PostgreSQL instance.

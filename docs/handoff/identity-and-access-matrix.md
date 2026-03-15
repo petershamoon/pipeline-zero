@@ -43,8 +43,8 @@ Last updated: 2026-03-08
 - Login flow test confirms expected role claims are present.
 
 ## Open items
-- `BLOCKED` (Owner: Manus, Due: 2026-03-15): create Entra app registrations and publish concrete app IDs for SPA/API.
-- `BLOCKED` (Owner: Manus, Due: 2026-03-15): configure federated credential subject patterns using actual repo slug and environment names.
+- *RESOLVED (2026-03-15)*: ContractFlow SPA Entra app registration created. Client ID: `b371698d-859c-45d1-9f4b-9293ffe58259`. All 5 app roles published.
+- *RESOLVED (2026-03-15)*: OIDC federated credentials created for `petershamoon/pipeline-zero` (main branch, pull_request, environment:staging). Client ID: `5a2dc89a-c874-4b53-ae0b-5f706f82ffe6`.
 
 ## Rollback/fallback notes
 - If OIDC deploy auth fails after credential changes, temporarily disable deployment workflows and restore previous federated credential bindings.
