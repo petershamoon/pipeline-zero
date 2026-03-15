@@ -1,0 +1,14 @@
+================================================================
+  CONTAINER APPS — BACKEND & FRONTEND
+  Generated: Sun Mar 15 02:48:40 UTC 2026
+================================================================
+
+--- BACKEND ---
+Name                   Fqdn                                                                      State    Image                                                                                Cpu    Memory    IdentityType
+---------------------  ------------------------------------------------------------------------  -------  -----------------------------------------------------------------------------------  -----  --------  --------------
+cf-stg-api-eastus2-01  cf-stg-api-eastus2-01.whitemeadow-b55bb89a.eastus2.azurecontainerapps.io  Running  cfstg01acr.azurecr.io/contractflow/backend:410d82ccb63bd23fb2b86c959614a79f69b863bf  0.5    1Gi       UserAssigned
+
+--- FRONTEND ---
+Name                   Fqdn                                                                      State    Image
+---------------------  ------------------------------------------------------------------------  -------  ------------------------------------------------------------------------------------
+cf-stg-web-eastus2-01  cf-stg-web-eastus2-01.whitemeadow-b55bb89a.eastus2.azurecontainerapps.io  Running  cfstg01acr.azurecr.io/contractflow/frontend:410d82ccb63bd23fb2b86c959614a79f69b863bf

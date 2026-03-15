@@ -1,0 +1,24 @@
+================================================================
+  PIPELINE-ZERO STAGING — AZURE RESOURCE LIST
+  Generated: Sun Mar 15 02:48:35 UTC 2026
+  Resource Group: cf-stg-rg-eastus2-01
+================================================================
+Name                          Type                                              Location
+----------------------------  ------------------------------------------------  --------------
+cf-stg-alerts-01              Microsoft.Insights/actiongroups                   global
+cf-stg-id-eastus2-01          Microsoft.ManagedIdentity/userAssignedIdentities  eastus2
+cf-stg-redis-eastus2-01       Microsoft.Cache/Redis                             eastus2
+cfstg01sa                     Microsoft.Storage/storageAccounts                 eastus2
+cfstg01acr                    Microsoft.ContainerRegistry/registries            eastus2
+cf-stg-log-eastus2-01         Microsoft.OperationalInsights/workspaces          eastus2
+cf-stg-cae-eastus2-01         Microsoft.App/managedEnvironments                 eastus2
+cf-stg-web-eastus2-01         Microsoft.App/containerApps                       eastus2
+cf-stg-pg-ncus-01             Microsoft.DBforPostgreSQL/flexibleServers         northcentralus
+cf-stg-kv-eastus2-01          Microsoft.KeyVault/vaults                         eastus2
+cf-stg-job-notify-eastus2-01  Microsoft.App/jobs                                eastus2
+cf-stg-job-exp-eastus2-01     Microsoft.App/jobs                                eastus2
+cf-stg-api-eastus2-01         Microsoft.App/containerApps                       eastus2
+cf-stg-alert-redis-memory     Microsoft.Insights/metricalerts                   global
+cf-stg-alert-redis-cpu        Microsoft.Insights/metricalerts                   global
+
+Total: 15 resources

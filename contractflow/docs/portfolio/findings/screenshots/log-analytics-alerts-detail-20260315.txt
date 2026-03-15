@@ -1,0 +1,14 @@
+================================================================
+  LOG ANALYTICS WORKSPACE & ALERT RULES
+  Generated: Sun Mar 15 02:49:43 UTC 2026
+================================================================
+--- WORKSPACE ---
+Name                   CustomerId                            Sku        RetentionDays    State
+---------------------  ------------------------------------  ---------  ---------------  ---------
+cf-stg-log-eastus2-01  80b4884d-e6c8-48ca-92a0-96b50703bb53  PerGB2018  30               Succeeded
+
+--- METRIC ALERT RULES ---
+Name                       Severity    Enabled
+-------------------------  ----------  ---------
+cf-stg-alert-redis-memory  2           True
+cf-stg-alert-redis-cpu     2           True

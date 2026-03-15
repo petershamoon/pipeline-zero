@@ -1,0 +1,17 @@
+================================================================
+  POSTGRESQL FLEXIBLE SERVER
+  Generated: Sun Mar 15 02:48:46 UTC 2026
+================================================================
+Name               Fqdn                                           State    Version    Sku            Tier       Location          Storage
+-----------------  ---------------------------------------------  -------  ---------  -------------  ---------  ----------------  ---------
+cf-stg-pg-ncus-01  cf-stg-pg-ncus-01.postgres.database.azure.com  Ready    16         Standard_B1ms  Burstable  North Central US  32
+
+--- DATABASES ---
+WARNING: The --database-name/-d argument has been deprecated and will be removed in next breaking change release(2.86.0) scheduled for May 2026.
+WARNING: The --name/-n argument will be repurposed to specify the database name. The --server-name/-s argument will be introduced to specify the server name in next breaking change release(2.86.0) scheduled for May 2026.
+Name               Charset    Collation
+-----------------  ---------  -----------
+azure_maintenance  UTF8       en_US.utf8
+postgres           UTF8       en_US.utf8
+azure_sys          UTF8       en_US.utf8
+contractflow       UTF8       en_US.utf8

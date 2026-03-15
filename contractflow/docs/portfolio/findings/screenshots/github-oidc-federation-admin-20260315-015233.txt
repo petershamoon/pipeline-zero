@@ -1,0 +1,108 @@
+=== Step 1: Create GitHub Deploy App Registration ===
+Deploy app already exists: 5a2dc89a-c874-4b53-ae0b-5f706f82ffe6
+
+=== Step 2: Create Service Principal ===
+Service principal already exists: 89e772b8-71e7-44e9-a1e8-cbd179b711d4
+
+=== Step 3: Create Federated Credentials ===
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#applications('62a5465c-4e06-4ebd-8458-d7c2a7cdc8ff')/federatedIdentityCredentials/$entity",
+  "audiences": [
+    "api://AzureADTokenExchange"
+  ],
+  "description": "GitHub Actions staging deploy",
+  "id": "69cfaf9c-fd7a-4d56-aa59-8991989d7d13",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "name": "contractflow-staging",
+  "subject": "repo:petershamoon/pipeline-zero:environment:staging"
+}
+Created staging federated credential
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#applications('62a5465c-4e06-4ebd-8458-d7c2a7cdc8ff')/federatedIdentityCredentials/$entity",
+  "audiences": [
+    "api://AzureADTokenExchange"
+  ],
+  "description": "GitHub Actions production deploy",
+  "id": "16740e41-52e3-42b3-94f7-9d7d4a726b0e",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "name": "contractflow-production",
+  "subject": "repo:petershamoon/pipeline-zero:environment:production"
+}
+Created production federated credential
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#applications('62a5465c-4e06-4ebd-8458-d7c2a7cdc8ff')/federatedIdentityCredentials/$entity",
+  "audiences": [
+    "api://AzureADTokenExchange"
+  ],
+  "description": "GitHub Actions main branch deploy",
+  "id": "ed5efd71-e0c2-41d3-85bc-2ac4225bb38e",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "name": "contractflow-main-branch",
+  "subject": "repo:petershamoon/pipeline-zero:ref:refs/heads/main"
+}
+Created main branch federated credential
+
+=== Step 4: Assign Roles ===
+{
+  "condition": null,
+  "conditionVersion": null,
+  "createdBy": null,
+  "createdOn": "2026-03-15T01:53:10.334247+00:00",
+  "delegatedManagedIdentityResourceId": null,
+  "description": null,
+  "id": "/subscriptions/5a9c39a7-65a6-4e2d-9a2b-25d1ac08ff08/resourceGroups/cf-stg-rg-eastus2-01/providers/Microsoft.Authorization/roleAssignments/7ee973d6-477f-4ccc-82e3-79affd6fd48d",
+  "name": "7ee973d6-477f-4ccc-82e3-79affd6fd48d",
+  "principalId": "89e772b8-71e7-44e9-a1e8-cbd179b711d4",
+  "principalType": "ServicePrincipal",
+  "resourceGroup": "cf-stg-rg-eastus2-01",
+  "roleDefinitionId": "/subscriptions/5a9c39a7-65a6-4e2d-9a2b-25d1ac08ff08/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c",
+  "scope": "/subscriptions/5a9c39a7-65a6-4e2d-9a2b-25d1ac08ff08/resourceGroups/cf-stg-rg-eastus2-01",
+  "type": "Microsoft.Authorization/roleAssignments",
+  "updatedBy": "6e7e3c1a-e377-4e8c-b238-584f248bf22c",
+  "updatedOn": "2026-03-15T01:53:10.529257+00:00"
+}
+Assigned Contributor on RG
+{
+  "condition": null,
+  "conditionVersion": null,
+  "createdBy": null,
+  "createdOn": "2026-03-15T01:53:24.303487+00:00",
+  "delegatedManagedIdentityResourceId": null,
+  "description": null,
+  "id": "/subscriptions/5a9c39a7-65a6-4e2d-9a2b-25d1ac08ff08/resourceGroups/cf-stg-rg-eastus2-01/providers/Microsoft.ContainerRegistry/registries/cfstg01acr/providers/Microsoft.Authorization/roleAssignments/049bac2f-52bb-44e4-ba63-09178db65785",
+  "name": "049bac2f-52bb-44e4-ba63-09178db65785",
+  "principalId": "89e772b8-71e7-44e9-a1e8-cbd179b711d4",
+  "principalType": "ServicePrincipal",
+  "resourceGroup": "cf-stg-rg-eastus2-01",
+  "roleDefinitionId": "/subscriptions/5a9c39a7-65a6-4e2d-9a2b-25d1ac08ff08/providers/Microsoft.Authorization/roleDefinitions/8311e382-0749-4cb8-b61a-304f252e45ec",
+  "scope": "/subscriptions/5a9c39a7-65a6-4e2d-9a2b-25d1ac08ff08/resourceGroups/cf-stg-rg-eastus2-01/providers/Microsoft.ContainerRegistry/registries/cfstg01acr",
+  "type": "Microsoft.Authorization/roleAssignments",
+  "updatedBy": "6e7e3c1a-e377-4e8c-b238-584f248bf22c",
+  "updatedOn": "2026-03-15T01:53:24.577490+00:00"
+}
+Assigned AcrPush on ACR
+
+════════════════════════════════════════════
+  GITHUB OIDC FEDERATION COMPLETE
+════════════════════════════════════════════
+  Deploy App (Client) ID:  5a2dc89a-c874-4b53-ae0b-5f706f82ffe6
+  Deploy App Object ID:    62a5465c-4e06-4ebd-8458-d7c2a7cdc8ff
+  Deploy SP Object ID:     89e772b8-71e7-44e9-a1e8-cbd179b711d4
+
+  Federated credentials:
+Name                        Subject
+--------------------------  ------------------------------------------------------------------
+contractflow-main-branch    repo:petershamoon/pipeline-zero:ref:refs/heads/main
+contractflow-production     repo:petershamoon/pipeline-zero:environment:production
+contractflow-staging        repo:petershamoon/pipeline-zero:environment:staging
+github-actions-main-branch  repo:petershamoon/aiuc1-soc2-compliance-lab:ref:refs/heads/main
+github-actions-production   repo:petershamoon/aiuc1-soc2-compliance-lab:environment:production
+github-actions-staging      repo:petershamoon/aiuc1-soc2-compliance-lab:environment:staging
+
+  → Update .env.staging:
+    DEPLOY_APP_CLIENT_ID=5a2dc89a-c874-4b53-ae0b-5f706f82ffe6
+    DEPLOY_APP_OBJECT_ID=62a5465c-4e06-4ebd-8458-d7c2a7cdc8ff
+    DEPLOY_SP_OBJECT_ID=89e772b8-71e7-44e9-a1e8-cbd179b711d4
+
+  → This DEPLOY_APP_CLIENT_ID becomes AZURE_CLIENT_ID in GitHub secrets
+════════════════════════════════════════════

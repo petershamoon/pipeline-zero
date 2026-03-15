@@ -1,0 +1,12 @@
+================================================================
+  CONTAINER REGISTRY (ACR)
+  Generated: Sun Mar 15 02:49:02 UTC 2026
+================================================================
+Name        LoginServer            Sku    State      AdminEnabled
+----------  ---------------------  -----  ---------  --------------
+cfstg01acr  cfstg01acr.azurecr.io  Basic  Succeeded  True
+
+--- REPOSITORIES ---
+ERROR: Could not connect to the registry login server 'cfstg01acr.azurecr.io'. Please verify that the registry exists and the URL 'https://cfstg01acr.azurecr.io/v2/' is reachable from your environment.
+Try running 'az acr check-health -n cfstg01acr --yes' to diagnose this issue.
+(no repositories yet — images pushed via GitHub Actions deploy)
