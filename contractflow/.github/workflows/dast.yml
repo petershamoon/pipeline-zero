@@ -29,13 +29,13 @@ jobs:
           echo "Target: $STAGING_BASE_URL"
 
       - name: Run ZAP baseline scan
-        # ZAP runs as non-root inside the container; use a world-writable temp dir
-        # then copy reports back to GITHUB_WORKSPACE for upload.
+        # ZAP's generate_af_plan hardcodes /zap/wrk; run as root so it can write there.
+        # Reports are written to /tmp/zap-out (world-writable) and copied back.
         run: |
-          mkdir -p /tmp/zap-work && chmod 777 /tmp/zap-work
+          mkdir -p /tmp/zap-out && chmod 777 /tmp/zap-out
           docker run --rm \
-            -v "/tmp/zap-work:/zap/wrk:rw" \
-            -e ZAP_AUTH_HEADER="" \
+            --user root \
+            -v "/tmp/zap-out:/zap/wrk:rw" \
             ghcr.io/zaproxy/zaproxy:stable \
             zap-baseline.py \
               -t "$STAGING_BASE_URL" \
@@ -45,9 +45,9 @@ jobs:
               -m 5 \
               -l WARN \
               -I
-          cp /tmp/zap-work/zap-report.html . || true
-          cp /tmp/zap-work/zap-report.json . || true
-          cp /tmp/zap-work/zap-report.md   . || true
+          cp /tmp/zap-out/zap-report.html . || true
+          cp /tmp/zap-out/zap-report.json . || true
+          cp /tmp/zap-out/zap-report.md   . || true
         continue-on-error: true
         id: zap_scan
 
