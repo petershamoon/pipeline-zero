@@ -237,6 +237,16 @@ resource "azurerm_storage_account" "main" {
       retention_policy_days = 7
     }
   }
+  # Checkov CKV2_AZURE_21: enable blob service logging for read/write/delete
+  blob_properties {
+    logging {
+      delete                = true
+      read                  = true
+      write                 = true
+      version               = "1.0"
+      retention_policy_days = 7
+    }
+  }
 }
 
 resource "azurerm_storage_container" "contracts" {
