@@ -18,16 +18,38 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install Semgrep + Checkov
+      - name: Install Semgrep + Checkov + Bandit + pip-audit
         run: |
           python -m pip install --upgrade pip
-          pip install semgrep checkov
+          pip install semgrep checkov bandit pip-audit
 
       - name: Run Semgrep
         run: semgrep --config auto --error --exclude node_modules --exclude .venv .
 
       - name: Run Checkov
         run: checkov -d contractflow/infra --framework terraform --quiet
+
+      - name: Run Bandit (Python SAST)
+        run: |
+          bandit -r contractflow/backend/app \
+            -ll --format json -o bandit-report.json || true
+          bandit -r contractflow/backend/app \
+            -ll --format text
+
+      - name: Run pip-audit (dependency CVEs)
+        run: |
+          pip-audit -r contractflow/backend/requirements.txt \
+            --format json -o pip-audit-report.json || true
+          pip-audit -r contractflow/backend/requirements.txt
+
+      - name: Upload SAST artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sast-reports
+          path: |
+            bandit-report.json
+            pip-audit-report.json
 
   gitleaks:
     runs-on: ubuntu-latest

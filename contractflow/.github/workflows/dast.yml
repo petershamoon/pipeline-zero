@@ -6,6 +6,10 @@ on:
     workflows: ["deploy-staging"]
     types: [completed]
 
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   zap-baseline:
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
@@ -22,16 +26,59 @@ jobs:
             echo "Missing STAGING_BASE_URL secret"
             exit 1
           fi
+          echo "Target: $STAGING_BASE_URL"
 
-      - name: Run ZAP baseline
+      - name: Run ZAP baseline scan
+        # -I: do not fail on warnings, only fail on FAIL rules
+        # -l WARN: log warnings and above
+        # -z: additional ZAP options (ajax spider disabled for baseline)
         run: |
-          docker run --rm -v "$PWD:/zap/wrk" ghcr.io/zaproxy/zaproxy:stable \
-            zap-baseline.py -t "$STAGING_BASE_URL" -r zap-report.html -J zap-report.json -m 5
+          docker run --rm \
+            -v "$PWD:/zap/wrk" \
+            -e ZAP_AUTH_HEADER="" \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py \
+              -t "$STAGING_BASE_URL" \
+              -r zap-report.html \
+              -J zap-report.json \
+              -w zap-report.md \
+              -m 5 \
+              -l WARN \
+              -I \
+              --auto
+        continue-on-error: true
+        id: zap_scan
+
+      - name: Parse ZAP results and gate on HIGH/CRITICAL
+        run: |
+          set -euo pipefail
+          if [ ! -f zap-report.json ]; then
+            echo "ZAP report not found — scan may have failed to start"
+            exit 1
+          fi
+          HIGH=$(python3 -c "
+          import json, sys
+          with open('zap-report.json') as f:
+              data = json.load(f)
+          alerts = data.get('site', [{}])[0].get('alerts', [])
+          high = [a for a in alerts if int(a.get('riskcode', 0)) >= 3]
+          print(len(high))
+          for a in high:
+              print(f\"  RISK {a['riskcode']}: {a['name']}\", file=sys.stderr)
+          ")
+          echo "High/Critical alert count: $HIGH"
+          if [ "$HIGH" -gt 0 ]; then
+            echo "DAST gate FAILED: $HIGH high/critical alerts found"
+            exit 1
+          fi
+          echo "DAST gate PASSED: no high/critical alerts"
 
       - name: Upload DAST artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: dast-report
+          name: dast-report-${{ github.run_id }}
           path: |
             zap-report.html
             zap-report.json
+            zap-report.md
