@@ -10,7 +10,6 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-
 revision = "20260308_0001"
 down_revision = None
 branch_labels = None
@@ -18,37 +17,56 @@ depends_on = None
 
 
 def upgrade() -> None:
-    user_role_enum = sa.Enum("viewer", "contributor", "approver", "admin", "super_admin", name="userrole")
-    contract_status_enum = sa.Enum(
-        "draft",
-        "pending_approval",
-        "active",
-        "expired",
-        "terminated",
-        "archived",
+    # Create enum types explicitly with checkfirst=True.
+    # Use postgresql.ENUM(create_type=False) in op.create_table() calls so
+    # SQLAlchemy does NOT attempt to re-create them during table creation.
+    bind = op.get_bind()
+
+    user_role_enum_def = sa.Enum(
+        "viewer", "contributor", "approver", "admin", "super_admin", name="userrole"
+    )
+    contract_status_enum_def = sa.Enum(
+        "draft", "pending_approval", "active", "expired", "terminated", "archived",
         name="contractstatus",
     )
-    audit_action_enum = sa.Enum(
-        "create",
-        "update",
-        "delete",
-        "status_change",
-        "upload",
-        "approve",
-        "reject",
-        "login",
-        "logout",
+    audit_action_enum_def = sa.Enum(
+        "create", "update", "delete", "status_change", "upload",
+        "approve", "reject", "login", "logout",
         name="auditaction",
     )
-    approval_decision_enum = sa.Enum("pending", "approved", "rejected", name="approvaldecision")
-    approval_chain_status_enum = sa.Enum("pending", "approved", "rejected", "cancelled", name="approvalchainstatus")
+    approval_decision_enum_def = sa.Enum("pending", "approved", "rejected", name="approvaldecision")
+    approval_chain_status_enum_def = sa.Enum(
+        "pending", "approved", "rejected", "cancelled", name="approvalchainstatus"
+    )
 
-    bind = op.get_bind()
-    user_role_enum.create(bind, checkfirst=True)
-    contract_status_enum.create(bind, checkfirst=True)
-    audit_action_enum.create(bind, checkfirst=True)
-    approval_decision_enum.create(bind, checkfirst=True)
-    approval_chain_status_enum.create(bind, checkfirst=True)
+    user_role_enum_def.create(bind, checkfirst=True)
+    contract_status_enum_def.create(bind, checkfirst=True)
+    audit_action_enum_def.create(bind, checkfirst=True)
+    approval_decision_enum_def.create(bind, checkfirst=True)
+    approval_chain_status_enum_def.create(bind, checkfirst=True)
+
+    # Column-level enum references use postgresql.ENUM(create_type=False)
+    # so SQLAlchemy skips the _on_table_create auto-create path.
+    user_role_col = postgresql.ENUM(
+        "viewer", "contributor", "approver", "admin", "super_admin",
+        name="userrole", create_type=False,
+    )
+    contract_status_col = postgresql.ENUM(
+        "draft", "pending_approval", "active", "expired", "terminated", "archived",
+        name="contractstatus", create_type=False,
+    )
+    audit_action_col = postgresql.ENUM(
+        "create", "update", "delete", "status_change", "upload",
+        "approve", "reject", "login", "logout",
+        name="auditaction", create_type=False,
+    )
+    approval_decision_col = postgresql.ENUM(
+        "pending", "approved", "rejected", name="approvaldecision", create_type=False,
+    )
+    approval_chain_status_col = postgresql.ENUM(
+        "pending", "approved", "rejected", "cancelled",
+        name="approvalchainstatus", create_type=False,
+    )
 
     op.create_table(
         "departments",
@@ -66,7 +84,7 @@ def upgrade() -> None:
         "users",
         sa.Column("email", sa.String(length=320), nullable=False),
         sa.Column("display_name", sa.String(length=255), nullable=False),
-        sa.Column("role", user_role_enum, nullable=False),
+        sa.Column("role", user_role_col, nullable=False),
         sa.Column("password_hash", sa.String(length=255), nullable=True),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("entra_object_id", sa.String(length=36), nullable=True),
@@ -85,7 +103,7 @@ def upgrade() -> None:
         sa.Column("title", sa.String(length=500), nullable=False),
         sa.Column("description", sa.String(length=5000), nullable=True),
         sa.Column("contract_number", sa.String(length=100), nullable=False),
-        sa.Column("status", contract_status_enum, nullable=False),
+        sa.Column("status", contract_status_col, nullable=False),
         sa.Column("start_date", sa.Date(), nullable=False),
         sa.Column("end_date", sa.Date(), nullable=False),
         sa.Column("value_usd", sa.Numeric(precision=15, scale=2), nullable=False),
@@ -127,7 +145,7 @@ def upgrade() -> None:
         "approval_chains",
         sa.Column("contract_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("template_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("status", approval_chain_status_enum, nullable=False),
+        sa.Column("status", approval_chain_status_col, nullable=False),
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
@@ -142,7 +160,7 @@ def upgrade() -> None:
         sa.Column("chain_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("step_order", sa.Integer(), nullable=False),
         sa.Column("approver_id", postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column("decision", approval_decision_enum, nullable=False),
+        sa.Column("decision", approval_decision_col, nullable=False),
         sa.Column("decided_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("comment", sa.String(length=2000), nullable=True),
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
@@ -182,7 +200,7 @@ def upgrade() -> None:
     op.create_table(
         "audit_logs",
         sa.Column("actor_id", postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column("action", audit_action_enum, nullable=False),
+        sa.Column("action", audit_action_col, nullable=False),
         sa.Column("resource_type", sa.String(length=100), nullable=False),
         sa.Column("resource_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("contract_id", postgresql.UUID(as_uuid=True), nullable=True),
