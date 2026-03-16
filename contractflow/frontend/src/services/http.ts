@@ -1,5 +1,15 @@
 import axios from "axios";
-import { isEntraEnabled, msalInstance, loginRequest } from "../config/msal";
+import { isEntraEnabled, msalInstance, loginRequest } from "@/config/msal";
+import { useSessionStore } from "@/store/session";
+
+export class HttpError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+    this.name = "HttpError";
+  }
+}
 
 function readCookie(name: string): string | null {
   const prefixed = `${name}=`;
@@ -39,3 +49,19 @@ http.interceptors.request.use(async (config) => {
   }
   return config;
 });
+
+http.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (axios.isAxiosError(error) && error.response) {
+      const { status, data } = error.response;
+      if (status === 401) {
+        useSessionStore.getState().setUser(null);
+        window.location.href = "/login";
+      }
+      const message = typeof data?.detail === "string" ? data.detail : "Request failed";
+      return Promise.reject(new HttpError(status, message));
+    }
+    return Promise.reject(error);
+  }
+);

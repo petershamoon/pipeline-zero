@@ -1,8 +1,12 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { login } from "../services/auth";
-import { useSessionStore } from "../store/session";
-import { isEntraEnabled, msalInstance, loginRequest } from "../config/msal";
+import { login } from "@/services/auth";
+import { useSessionStore } from "@/store/session";
+import { isEntraEnabled, msalInstance, loginRequest } from "@/config/msal";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 function LocalLoginForm() {
   const [email, setEmail] = useState("");
@@ -28,15 +32,31 @@ function LocalLoginForm() {
   }
 
   return (
-    <form onSubmit={onSubmit}>
-      <label htmlFor="email">Email</label>
-      <input id="email" value={email} onChange={(e) => setEmail(e.target.value)} style={{ width: "100%", marginBottom: 12 }} />
-      <label htmlFor="password">Password</label>
-      <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} style={{ width: "100%", marginBottom: 12 }} />
-      {error && <p style={{ color: "#b91c1c" }}>{error}</p>}
-      <button type="submit" disabled={loading} style={{ width: "100%" }}>
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          type="email"
+          placeholder="you@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="password">Password</Label>
+        <Input
+          id="password"
+          type="password"
+          placeholder="Enter your password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+      </div>
+      {error && <p className="text-sm text-destructive">{error}</p>}
+      <Button type="submit" disabled={loading} className="w-full">
         {loading ? "Signing in..." : "Sign in"}
-      </button>
+      </Button>
     </form>
   );
 }
@@ -55,34 +75,29 @@ function EntraLoginButton() {
   }
 
   return (
-    <button
+    <Button
       onClick={handleEntraLogin}
       disabled={loading}
-      style={{
-        width: "100%",
-        padding: "10px 16px",
-        backgroundColor: "#0078d4",
-        color: "#ffffff",
-        border: "none",
-        borderRadius: 6,
-        cursor: loading ? "wait" : "pointer",
-        fontSize: 14,
-        fontWeight: 500,
-      }}
+      className="w-full"
     >
       {loading ? "Redirecting..." : "Sign in with Microsoft"}
-    </button>
+    </Button>
   );
 }
 
 export function LoginPage() {
   return (
-    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "linear-gradient(145deg, #e2e8f0, #ffffff)" }}>
-      <div style={{ width: 360, padding: 24, borderRadius: 12, background: "#ffffff", boxShadow: "0 16px 40px rgba(15, 23, 42, 0.1)" }}>
-        <h1 style={{ marginTop: 0 }}>ContractFlow Login</h1>
-        {isEntraEnabled && <EntraLoginButton />}
-        {!isEntraEnabled && <LocalLoginForm />}
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-50">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle className="text-xl">ContractFlow Login</CardTitle>
+          <CardDescription>Enter your credentials to continue</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isEntraEnabled && <EntraLoginButton />}
+          {!isEntraEnabled && <LocalLoginForm />}
+        </CardContent>
+      </Card>
     </div>
   );
 }

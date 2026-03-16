@@ -76,3 +76,38 @@ export interface ApprovalChainListResponse {
   items: ApprovalChain[];
   total: number;
 }
+
+export interface Department {
+  id: string;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+}
+
+export interface ApprovalTemplate {
+  id: string;
+  name: string;
+  description: string | null;
+  steps_config: Record<string, unknown>[];
+  min_approvers: number;
+  is_active: boolean;
+}
+
+export interface AuditEvent {
+  id: string;
+  actor_id: string | null;
+  action: string;
+  resource_type: string;
+  resource_id: string;
+  contract_id: string | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  correlation_id: string | null;
+  metadata_json: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export interface AuditEventListResponse {
+  items: AuditEvent[];
+  total: number;
+}
