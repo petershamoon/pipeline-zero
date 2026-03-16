@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from app.core.config import Settings
 from app.core.database import get_db_session
 from app.main import create_app
+from app.models.base import Base
 
 
 def get_test_settings() -> Settings:
@@ -31,6 +32,19 @@ def test_engine():
     settings = get_test_settings()
     engine = create_async_engine(settings.DATABASE_URL, pool_pre_ping=True)
     yield engine
+
+
+@pytest.fixture(scope="session", autouse=True)
+async def _create_tables(test_engine):
+    """Create all tables before tests and drop them after."""
+    # Import all models so Base.metadata is fully populated
+    import app.models  # noqa: F401
+
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
 
 
 @pytest.fixture
