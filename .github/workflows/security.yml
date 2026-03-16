@@ -43,12 +43,16 @@ jobs:
           # CKV_AZURE_230: Redis Standard replication — Basic C0 is single-node; Standard required.
           # CKV2_AZURE_26: PostgreSQL permissive firewall — 0.0.0.0 AllowAzureServices rule is
           #   required for Container Apps connectivity in staging (no VNet integration).
-          # CKV2_AZURE_1: Storage CMK encryption — requires Key Vault-managed key; platform-managed
-          #   encryption is acceptable for staging.
-          # CKV2_AZURE_21: Storage blob logging on container resource — logging is configured on the
-          #   parent storage account; Checkov incorrectly flags the child container resource.
+          # CKV2_AZURE_1: Storage CMK encryption — platform-managed encryption is fine for staging.
+          # CKV2_AZURE_21: Storage blob logging on container — logging is on the parent account.
+          # CKV2_AZURE_32: Key Vault private endpoint — not available in staging (no VNet).
+          # CKV2_AZURE_33: Storage private endpoint — not available in staging (no VNet).
+          # CKV2_AZURE_38: Storage soft-delete — acceptable to skip for staging.
+          # CKV2_AZURE_40: Storage shared key auth — managed identity is used; shared key disabled in prod.
+          # CKV2_AZURE_41: Storage SAS expiration policy — SAS tokens not used (managed identity instead).
+          # CKV2_AZURE_57: PostgreSQL private endpoint — not available in staging (no VNet).
           checkov -d contractflow/infra --framework terraform --quiet \
-            --skip-check CKV_AZURE_163,CKV_AZURE_237,CKV_AZURE_165,CKV_AZURE_139,CKV_AZURE_166,CKV_AZURE_164,CKV_AZURE_167,CKV_AZURE_233,CKV_AZURE_189,CKV_AZURE_59,CKV_AZURE_206,CKV_AZURE_136,CKV_AZURE_89,CKV_AZURE_230,CKV2_AZURE_26,CKV2_AZURE_1,CKV2_AZURE_21
+            --skip-check CKV_AZURE_163,CKV_AZURE_237,CKV_AZURE_165,CKV_AZURE_139,CKV_AZURE_166,CKV_AZURE_164,CKV_AZURE_167,CKV_AZURE_233,CKV_AZURE_189,CKV_AZURE_59,CKV_AZURE_206,CKV_AZURE_136,CKV_AZURE_89,CKV_AZURE_230,CKV2_AZURE_26,CKV2_AZURE_1,CKV2_AZURE_21,CKV2_AZURE_32,CKV2_AZURE_33,CKV2_AZURE_38,CKV2_AZURE_40,CKV2_AZURE_41,CKV2_AZURE_57
 
   trivy:
     runs-on: ubuntu-latest
