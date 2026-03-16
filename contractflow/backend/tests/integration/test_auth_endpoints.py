@@ -60,7 +60,7 @@ class TestLogin:
     ) -> None:
         """Valid email + password returns 200 with user info and sets cookies."""
         password = "my-secret-pass-123"
-        user = await create_test_user(
+        await create_test_user(
             db_session,
             email="login-user@example.com",
             password=password,

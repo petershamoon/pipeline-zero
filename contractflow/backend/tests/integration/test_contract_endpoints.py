@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date
 
 import pytest
 from httpx import AsyncClient
