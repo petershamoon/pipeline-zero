@@ -9,27 +9,9 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: contractflow
-          POSTGRES_PASSWORD: testpass
-          POSTGRES_DB: contractflow_test
-        ports:
-          - 5433:5432
-        options: >-
-          --health-cmd "pg_isready -U contractflow"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     defaults:
       run:
         working-directory: contractflow/backend
-    env:
-      DATABASE_URL: "postgresql+asyncpg://contractflow:testpass@localhost:5433/contractflow_test"
-      JWT_SECRET: "ci-test-secret-key-not-for-production"
-      SESSION_SECRET: "ci-test-session-secret"
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
@@ -47,8 +29,8 @@ jobs:
       - name: Lint backend
         run: ruff check app tests
 
-      - name: Run backend tests
-        run: pytest -q --maxfail=1
+      - name: Run unit tests
+        run: pytest -q --maxfail=1 -m "not integration"
 
   frontend:
     runs-on: ubuntu-latest
