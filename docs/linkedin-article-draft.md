@@ -2,7 +2,7 @@
 
 Most teams bolt security on at the end. A penetration test before launch. A vulnerability scan after deployment. Maybe a compliance audit once a quarter. By that point, you're paying to fix things that could have been caught in a pull request.
 
-I built a system where 8 security scanners run on every commit — and nothing merges without passing all of them.
+I built a pipeline with 5 security tools — each covering a distinct attack surface with zero overlap — that gates every merge and every production deployment.
 
 ---
 
@@ -12,7 +12,7 @@ The cost of fixing a vulnerability scales exponentially the later you find it. A
 
 Most CI/CD pipelines look like this: lint, test, build, deploy. Security is either a separate process entirely, or it's a single scanner that people learn to ignore because it's noisy and never blocks anything.
 
-I wanted to build a pipeline where security scanning is as integral as unit tests — where the PR can't merge until every scanner passes, and deployment can't happen until the running application passes dynamic analysis.
+I wanted to build a pipeline where security scanning is as integral as unit tests — where the PR can't merge until every scanner passes, and nothing reaches production without passing dynamic analysis against the live staging environment.
 
 ## The Pipeline
 
@@ -20,21 +20,34 @@ The project is called PipelineZero. The demo application is a contract lifecycle
 
 Here's what happens on every pull request:
 
-**7 scanners run in parallel as a security gate:**
+**4 scanners run in parallel as a security gate:**
 
 1. **Semgrep** scans the full repo for application vulnerability patterns — injection flaws, auth bypasses, insecure crypto, OWASP Top 10
-2. **Bandit** does Python-specific SAST — catches `eval()` calls, hardcoded passwords, weak hashing
-3. **CodeQL** runs GitHub's semantic analysis with a matrix build for both Python and JavaScript/TypeScript — this is the one that does real dataflow analysis and taint tracking
-4. **pip-audit** checks every Python dependency against the PyPI advisory database for known CVEs
-5. **Trivy** does a full filesystem scan for vulnerabilities, leaked secrets, and misconfigurations at HIGH/CRITICAL severity
-6. **Gitleaks** searches the entire repo for hardcoded secrets — API keys, tokens, private keys
-7. **Checkov** validates all Terraform code against security compliance rules
+2. **CodeQL** runs GitHub's semantic analysis with a matrix build for both Python and JavaScript/TypeScript — this is the one that does real dataflow analysis and taint tracking
+3. **Trivy** does a full filesystem scan for dependency CVEs, leaked secrets, and misconfigurations at HIGH/CRITICAL severity — one tool that replaces the need for separate dependency auditing and secret scanning tools
+4. **Checkov** validates all Terraform code against security compliance rules — encryption, access controls, logging, network exposure
 
 If any scanner fails, the PR can't merge.
 
-**After merge, on every staging deployment:**
+**Before production deployment (manual pre-production gate):**
 
-8. **Nuclei** runs DAST against the live staging URL — HTTP vulnerabilities, exposed endpoints, SSL issues, misconfigurations. It gates on HIGH/CRITICAL findings, meaning a staging deployment with a critical vulnerability blocks the pipeline.
+5. **Nuclei** runs DAST against the live staging URL — HTTP vulnerabilities, exposed endpoints, SSL issues, misconfigurations. It gates on HIGH/CRITICAL findings, meaning a critical vulnerability blocks the production deploy.
+
+The key design decision: DAST runs as a pre-production gate, not after every staging deploy. Staging deploys are frequent and most don't introduce HTTP-layer vulnerabilities. DAST is slow. Running it on every push is noise. Running it before production is a gate that matters.
+
+## Why 5 Tools, Not 8
+
+An early version of this pipeline had 8 scanners. That's what happens when you pick tools from a checklist instead of thinking about coverage gaps.
+
+Bandit does Python SAST — but Semgrep already covers that and more. Gitleaks does secret scanning — but Trivy already scans for secrets as part of its filesystem sweep. pip-audit checks Python dependency CVEs — but Trivy's vulnerability scanner already pulls from the same advisory databases.
+
+Three tools doing work that was already covered. Removing them wasn't about having fewer tools — it was about having the right tools. Each of the 5 remaining scanners covers a surface that no other tool in the pipeline touches:
+
+- Semgrep: pattern-based SAST (fast, broad)
+- CodeQL: semantic SAST (deep, dataflow-aware)
+- Trivy: supply chain + secrets + misconfig (one tool, three surfaces)
+- Checkov: IaC compliance (Terraform-specific)
+- Nuclei: DAST (live application testing)
 
 ## Zero-Trust Deployment
 
@@ -42,7 +55,7 @@ The deployment pipeline itself doesn't store any credentials. GitHub Actions aut
 
 Runtime secrets (database URLs, Redis connection strings, CSRF secrets) live in Azure Key Vault. The deploy workflow fetches them at deploy time and masks them in logs using GitHub's `::add-mask::` directive. They never appear in workflow output.
 
-The deploy also gates on health checks — both the backend (`/health/ready`) and frontend (`/health`) must return HTTP 200 before the pipeline proceeds to DAST scanning.
+The deploy also gates on health checks — both the backend (`/health/ready`) and frontend (`/health`) must return HTTP 200 before staging is considered healthy.
 
 ## Defense in Depth at the Application Level
 
@@ -58,6 +71,8 @@ The application refuses to start in production if required security configuratio
 
 ## What I Learned Building This
 
+**Fewer tools, better coverage.** The instinct is to add more scanners. The reality is that overlapping tools create noise, slow down pipelines, and give a false sense of thoroughness. Five tools with distinct coverage is better than eight with overlap.
+
 **Checkov skip lists are real.** When your staging environment uses Azure's Basic-tier SKUs (because you're not spending production money on a portfolio project), you'll have legitimate policy skips. ACR vulnerability scanning requires Premium. Geo-redundant Postgres backups aren't available on B1ms. I documented every skip with the exact reason — the skip list became its own form of security documentation.
 
 **ZAP has a Docker permission bug.** I started with OWASP ZAP for DAST. The `zaproxy:stable` image has a known `PermissionError` on `/zap/wrk/zap.yaml` that's been open for months. Switched to Nuclei — faster, more reliable, and the template system is excellent for targeting specific vulnerability classes.
@@ -68,12 +83,12 @@ The application refuses to start in production if required security configuratio
 
 ## By the Numbers
 
-- **8 scanners** on every commit (7 SAST/SCA/secrets + 1 DAST)
+- **5 scanners**, zero overlap — each covering a distinct attack surface
 - **Zero stored credentials** in GitHub — OIDC federation end-to-end
 - **15 Checkov rules** explicitly documented as staging-SKU exceptions
 - **6 GitHub Actions workflows** covering lint, test, security, deploy, DAST, and branch policy
 - **6 Architecture Decision Records** documenting security-relevant design choices
-- **Full DAST** on every staging deployment with automated severity gating
+- **DAST as a pre-production gate** with automated severity gating
 
 ---
 

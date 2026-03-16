@@ -2,7 +2,7 @@
 
 **Shift-left security pipeline that catches vulnerabilities before code reaches staging.**
 
-PipelineZero is a reference implementation showing how to integrate 7 security scanners + DAST into GitHub Actions so every pull request is scanned for vulnerabilities, secrets, dependency CVEs, and infrastructure misconfigurations — and nothing merges without passing all of them.
+PipelineZero integrates 5 security scanners into GitHub Actions — each covering a distinct attack surface with zero overlap. Every pull request is scanned for application vulnerabilities, dependency CVEs, leaked secrets, and infrastructure misconfigurations. Nothing merges without passing all of them, and nothing reaches production without passing dynamic analysis against the live staging environment.
 
 ContractFlow (a contract lifecycle management app built with FastAPI and React 19) serves as the realistic workload. The security pipeline is the product.
 
@@ -15,53 +15,52 @@ PR opened
   │
   ├─── ci-lint-test ──────── Lint + unit tests (backend & frontend)
   │
-  ├─── security-gate ─────── 7 scanners in parallel:
-  │      ├── Semgrep          SAST (application vuln patterns)
-  │      ├── Bandit           SAST (Python-specific)
-  │      ├── CodeQL           Semantic analysis (Python + JS/TS)
-  │      ├── pip-audit        Dependency CVEs
-  │      ├── Trivy            Vuln + secret + misconfig scanning
-  │      ├── Gitleaks         Hardcoded secrets in repo
-  │      └── Checkov          Terraform/IaC compliance
+  ├─── security-gate ─────── 3 parallel jobs:
+  │      ├── Semgrep + Checkov   SAST + IaC compliance
+  │      ├── Trivy               Vuln + secret + misconfig scanning
+  │      └── CodeQL              Semantic analysis (Python + JS/TS)
   │
   └─── branch-policy ─────── PR description enforcement
 
 Merge to main
   │
   └─── deploy-staging ─────── OIDC auth → Key Vault secrets → build → deploy → health checks
-         │
-         └─── dast-gate ────── Nuclei DAST against live staging (gates on HIGH/CRITICAL)
+
+Pre-production gate (manual)
+  │
+  ├─── dast-gate ──────────── Nuclei DAST against staging (gates on HIGH/CRITICAL)
+  │
+  └─── deploy-production ──── Manual deploy after DAST passes
 ```
 
-## The 8 Scanners
+## The 5 Scanners
+
+Each tool covers a distinct security surface — no redundancy between them.
 
 ### Static Application Security Testing (SAST)
 
 | Scanner | What It Catches | Scope |
 |---------|----------------|-------|
 | **Semgrep** | Injection flaws, auth bypasses, insecure crypto, OWASP Top 10 patterns | Full repo (`--config auto`) |
-| **Bandit** | Python-specific issues: `eval()`, hardcoded passwords, weak hashing, SQL injection | `contractflow/backend/app` |
 | **CodeQL** | Semantic dataflow analysis — taint tracking, type confusion, API misuse | Python + JavaScript/TypeScript (matrix build) |
 
-### Supply Chain Security
+### Supply Chain + Secrets + Misconfig
 
 | Scanner | What It Catches | Scope |
 |---------|----------------|-------|
-| **pip-audit** | Known CVEs in Python dependencies (PyPI advisory database) | `requirements.txt` |
-| **Trivy** | Filesystem vulnerabilities, leaked secrets, misconfigurations | Full repo (severity: HIGH, CRITICAL) |
+| **Trivy** | Dependency CVEs, leaked secrets, filesystem misconfigurations | Full repo (severity: HIGH, CRITICAL) |
 
-### Secrets & Infrastructure
+### Infrastructure as Code
 
 | Scanner | What It Catches | Scope |
 |---------|----------------|-------|
-| **Gitleaks** | API keys, tokens, passwords, private keys in source code | Full repo (v8.30.0) |
 | **Checkov** | Terraform misconfigurations: missing encryption, public access, missing logging | `contractflow/infra` |
 
 ### Dynamic Application Security Testing (DAST)
 
 | Scanner | What It Catches | Scope |
 |---------|----------------|-------|
-| **Nuclei** | HTTP vulnerabilities, exposed endpoints, SSL issues, misconfigurations against running app | Live staging URL (medium/high/critical severity gate) |
+| **Nuclei** | HTTP vulnerabilities, exposed endpoints, SSL issues, misconfigurations against running app | Live staging URL (pre-production gate, medium/high/critical severity) |
 
 ## Zero-Credential Deployment
 
@@ -83,7 +82,7 @@ GitHub Actions ──OIDC token──→ Azure AD ──federated credential─�
 
 - **OIDC federation**: GitHub Actions authenticates to Azure via short-lived OIDC tokens — no `AZURE_CLIENT_SECRET` anywhere
 - **Key Vault injection**: `DATABASE_URL`, `REDIS_URL`, and `CSRF_SECRET` are fetched from Azure Key Vault at deploy time and masked in workflow logs (`::add-mask::`)
-- **Health check gates**: Backend and frontend must return HTTP 200 on `/health/ready` and `/health` respectively before the pipeline proceeds to DAST
+- **Health check gates**: Backend and frontend must return HTTP 200 on `/health/ready` and `/health` respectively before staging is considered healthy
 - **Environment protection**: Staging and production are separate GitHub environments with protection rules
 - **Concurrency locks**: `cancel-in-progress: false` prevents parallel deploys from corrupting state
 
@@ -157,10 +156,10 @@ The app is available at `http://localhost:3000` with the backend API at `http://
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
 | `ci-lint-test` | PR to main, push to main | Lint (ruff + eslint) + unit tests (pytest + vitest) + typecheck |
-| `security-gate` | PR to main, push to main | Run all 7 security scanners, upload SAST artifacts |
+| `security-gate` | PR to main, push to main | Run Semgrep, Checkov, Trivy, and CodeQL in parallel |
 | `branch-policy` | PR to main | Enforce non-empty PR descriptions |
 | `deploy-staging` | Push to main, manual | OIDC login → Key Vault fetch → Docker build/push → Container App update → health checks |
-| `dast-gate` | After deploy-staging, manual | Nuclei DAST scan against staging, gate on HIGH/CRITICAL findings |
+| `dast-gate` | Manual (pre-production) | Nuclei DAST scan against staging, gate on HIGH/CRITICAL findings |
 | `deploy-production` | Manual only | OIDC login → deploy same image SHA to production environment |
 
 ## Project Structure
@@ -170,8 +169,8 @@ PipelineZero/
 ├── .github/
 │   ├── workflows/
 │   │   ├── ci.yml                    # Lint + test gate
-│   │   ├── security.yml              # 7-scanner security gate
-│   │   ├── dast.yml                  # Nuclei DAST post-deploy
+│   │   ├── security.yml              # SAST + IaC + supply chain gate
+│   │   ├── dast.yml                  # Nuclei DAST (pre-production gate)
 │   │   ├── deploy-staging.yml        # OIDC + Key Vault + deploy
 │   │   ├── deploy-production.yml     # Manual production deploy
 │   │   └── branch-policy.yml         # PR description enforcement

@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  semgrep-checkov:
+  sast-iac:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -18,10 +18,10 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install Semgrep + Checkov + Bandit + pip-audit
+      - name: Install Semgrep + Checkov
         run: |
           python -m pip install --upgrade pip
-          pip install semgrep checkov bandit pip-audit
+          pip install semgrep checkov
 
       - name: Run Semgrep
         run: semgrep --config auto --error --exclude node_modules --exclude .venv .
@@ -45,39 +45,6 @@ jobs:
           #   required for Container Apps connectivity in staging (no VNet integration).
           checkov -d contractflow/infra --framework terraform --quiet \
             --skip-check CKV_AZURE_163,CKV_AZURE_237,CKV_AZURE_165,CKV_AZURE_139,CKV_AZURE_166,CKV_AZURE_164,CKV_AZURE_167,CKV_AZURE_233,CKV_AZURE_189,CKV_AZURE_59,CKV_AZURE_206,CKV_AZURE_136,CKV_AZURE_89,CKV_AZURE_230,CKV2_AZURE_26
-
-      - name: Run Bandit (Python SAST)
-        run: |
-          bandit -r contractflow/backend/app \
-            -ll --format json -o bandit-report.json || true
-          bandit -r contractflow/backend/app \
-            -ll --format text
-
-      - name: Run pip-audit (dependency CVEs)
-        run: |
-          pip-audit -r contractflow/backend/requirements.txt \
-            --format json -o pip-audit-report.json || true
-          pip-audit -r contractflow/backend/requirements.txt
-
-      - name: Upload SAST artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: sast-reports
-          path: |
-            bandit-report.json
-            pip-audit-report.json
-
-  gitleaks:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
-
-      - name: Run Gitleaks
-        run: |
-          docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:v8.30.0 \
-            detect --source /repo --no-git --verbose
 
   trivy:
     runs-on: ubuntu-latest

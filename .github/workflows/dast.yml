@@ -1,10 +1,9 @@
 name: dast-gate
+# Pre-production gate — run manually after staging deploy passes,
+# before triggering deploy-production.
 
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows: ["deploy-staging"]
-    types: [completed]
 
 permissions:
   contents: read
@@ -13,7 +12,7 @@ permissions:
 jobs:
   nuclei-dast:
     name: DAST — Nuclei HTTP scan
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     env:
       STAGING_BASE_URL: ${{ secrets.STAGING_BASE_URL }}
