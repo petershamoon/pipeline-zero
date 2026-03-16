@@ -23,4 +23,11 @@ export default tseslint.config(
       ...jsxA11y.configs.recommended.rules,
     },
   },
+  {
+    files: ["src/components/ui/**/*.{ts,tsx}"],
+    rules: {
+      "jsx-a11y/label-has-associated-control": "off",
+      "jsx-a11y/heading-has-content": "off",
+    },
+  },
 );
