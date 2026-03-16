@@ -34,9 +34,13 @@ def test_engine():
     yield engine
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 async def _create_tables(test_engine):
-    """Create all tables before tests and drop them after."""
+    """Create all tables before tests and drop them after.
+
+    This fixture is NOT autouse — it must be explicitly requested
+    by the integration conftest so unit tests don't require a database.
+    """
     # Import all models so Base.metadata is fully populated
     import app.models  # noqa: F401
 
@@ -48,7 +52,7 @@ async def _create_tables(test_engine):
 
 
 @pytest.fixture
-async def db_session(test_engine) -> AsyncGenerator[AsyncSession, None]:
+async def db_session(test_engine, _create_tables) -> AsyncGenerator[AsyncSession, None]:
     """Provide a transactional test database session."""
     session_factory = async_sessionmaker(
         test_engine,
