@@ -1,6 +1,6 @@
 # Release And Rollback Runbook
 
-Last updated: 2026-03-08
+Last updated: 2026-03-16
 
 ## Ownership
 - Codex/Claude: code changes, tests, and workflow logic.
@@ -48,5 +48,8 @@ Last updated: 2026-03-08
 - On-call owner confirmed for release window.
 
 ## Open items
-- `BLOCKED` (Owner: Manus, Due: 2026-03-15): populate GitHub environment secrets for staging and production deploy workflows.
-- `BLOCKED` (Owner: Manus, Due: 2026-03-22): complete first staging dry-run and record release evidence in `contractflow/docs/portfolio/findings`.
+- ~~`BLOCKED` (Owner: Manus, Due: 2026-03-15): populate GitHub environment secrets for staging and production deploy workflows.~~ **RESOLVED** 2026-03-15 — Staging environment secrets populated and deploy workflow passing. Production environment secrets deferred (production not provisioned).
+- ~~`BLOCKED` (Owner: Manus, Due: 2026-03-22): complete first staging dry-run and record release evidence.~~ **RESOLVED** 2026-03-16 — Staging deploy and DAST gate both executed successfully. CI, security-gate, and deploy-staging all green.
+
+## Production status
+Production Azure resources are **not provisioned**. The `deploy-production.yml` workflow and Terraform production variable files exist and are ready, but production provisioning has been deferred. Staging is the active demo environment.
