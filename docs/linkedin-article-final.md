@@ -20,14 +20,30 @@ Three tools doing work that was already covered. Removing them wasn't about havi
 > *All 4 GitHub Actions workflows — security-gate, deploy-staging, dast-gate, and CodeQL — shown in the Actions tab.*
 > Location: `contractflow/docs/portfolio/findings/screenshots/06-github-actions-all-workflows-20260315.png`
 
+> **[INSERT SCREENSHOT: `11-security-gate-all-green.webp`]**
+> *Security-gate workflow completing successfully with all 4 jobs green (sast-iac, trivy, codeql python, codeql js/ts).*
+> Location: `docs/screenshots/demo/11-security-gate-all-green.webp`
+
 ### Gate 1: Semgrep (Pattern-Based SAST)
 Semgrep runs on every pull request, scanning the full repository for application vulnerability patterns. It catches injection flaws, authentication bypasses, and insecure cryptography. Because it's pattern-based, it runs in seconds. If Semgrep finds a vulnerability, the PR cannot merge.
+
+> **[INSERT SCREENSHOT: `14-sast-iac-semgrep-checkov-green.webp`]**
+> *The sast-iac job running Semgrep and Checkov successfully in under a minute.*
+> Location: `docs/screenshots/demo/14-sast-iac-semgrep-checkov-green.webp`
 
 ### Gate 2: CodeQL (Semantic SAST)
 While Semgrep looks for patterns, CodeQL runs GitHub's semantic analysis with a matrix build for both Python and JavaScript/TypeScript. This does real dataflow analysis and taint tracking — following untrusted user input from the API router all the way down to the database query.
 
+> **[INSERT SCREENSHOT: `15-codeql-python-green.webp`]**
+> *CodeQL semantic analysis running successfully on the Python backend code.*
+> Location: `docs/screenshots/demo/15-codeql-python-green.webp`
+
 ### Gate 3: Trivy (Supply Chain & Secrets)
 Trivy handles the filesystem sweep. It scans the Dockerfiles, the `requirements.txt`, the `package.json`, and the raw code for dependency CVEs, leaked secrets, and misconfigurations. It's configured to fail the build only on HIGH or CRITICAL severity findings, preventing the pipeline from getting clogged with low-risk noise.
+
+> **[INSERT SCREENSHOT: `13-trivy-scan-output.webp`]**
+> *Trivy filesystem scan output showing vulnerability database updates and scan execution.*
+> Location: `docs/screenshots/demo/13-trivy-scan-output.webp`
 
 ### Gate 4: Checkov (Infrastructure as Code)
 Checkov validates all Terraform code against security compliance rules before it ever reaches Azure. It checks for encryption at rest, network exposure, logging configurations, and access controls.
