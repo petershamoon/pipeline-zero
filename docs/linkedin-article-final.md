@@ -1,4 +1,4 @@
-# How I Built a Shift-Left Security Pipeline That Catches Vulnerabilities Before Code Reaches Staging
+# PipelineZero: What Shift-Left Security Looks Like
 
 I keep hearing about "shift-left security," but the conversations always stay at the principle level: DevSecOps culture, developer enablement, continuous scanning. Important concepts, but none of it ever answered the question I actually cared about: what does this look like in code?
 
@@ -10,9 +10,9 @@ I used two AI agents to help me build it: Claude handled the application code an
 
 ## The Pipeline: 5 Tools, Zero Overlap
 
-An early version of this pipeline had 8 scanners. That's what happens when you pick tools from a checklist instead of thinking about coverage gaps. Bandit does Python SAST - but Semgrep already covers that and more. Gitleaks does secret scanning - but Trivy already scans for secrets as part of its filesystem sweep. pip-audit checks Python dependency CVEs - but Trivy's vulnerability scanner already pulls from the same advisory databases.
+The temptation is to throw every scanner you can find at the pipeline. But overlapping tools create noise, slow down builds, and give a false sense of thoroughness. Bandit does Python SAST - but Semgrep already covers that and more. Gitleaks does secret scanning - but Trivy already scans for secrets as part of its filesystem sweep. pip-audit checks Python dependency CVEs - but Trivy's vulnerability scanner already pulls from the same advisory databases.
 
-Three tools doing work that was already covered. Removing them wasn't about having fewer tools - it was about having the right tools. Each of the 5 remaining scanners covers a surface that no other tool in the pipeline touches.
+The goal isn't more tools. It's the right tools. Each of the 5 scanners in this pipeline covers a surface that no other tool in the pipeline touches.
 
 > **[INSERT SCREENSHOT: `06-github-actions-all-workflows-20260315.png`]**
 > *All 4 GitHub Actions workflows - security-gate, deploy-staging, dast-gate, and CodeQL - shown in the Actions tab.*
@@ -130,7 +130,7 @@ Understanding the boundaries of what you've built is part of the governance exer
 
 ## What I Took Away From This
 
-I started with 8 scanners because more feels safer. It isn't. Overlapping tools create noise, slow down pipelines, and give a false sense of thoroughness. Five tools with distinct coverage beats eight with overlap.
+Fewer tools, better coverage. Overlapping scanners create noise, slow down pipelines, and give a false sense of thoroughness. Five tools with distinct coverage beats a bloated toolchain every time.
 
 Getting scanners to run is easy. Getting them to run without generating so much noise that people ignore them is the actual engineering challenge. Severity thresholds, scan scope restrictions, and skip lists with documented justifications - that's what makes a security pipeline usable instead of just technically correct.
 
@@ -139,5 +139,3 @@ OIDC federation is worth the setup. No more rotating service principal secrets. 
 The full repository is on GitHub: [github.com/petershamoon/pipeline-zero](https://github.com/petershamoon/pipeline-zero)
 
 If you're thinking about integrating security scanning into your CI/CD pipeline, the biggest lesson from this build is: start with the gate. If scanners run but never block anything, nobody pays attention. Make them required checks, document your skip lists honestly, and treat security findings with the same urgency as failing tests. That's what shift-left actually looked like once I got it working.
-
-#ShiftLeft #DevSecOps #GitHubActions #SecurityPipeline #CICD #CloudSecurity #Azure #SAST #DAST #InfrastructureAsCode
