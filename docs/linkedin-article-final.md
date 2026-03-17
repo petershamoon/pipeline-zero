@@ -24,6 +24,14 @@ Three tools doing work that was already covered. Removing them wasn't about havi
 
 If any of the first four scanners fail, the PR cannot merge. The fifth scanner, Nuclei, runs as a pre-production gate. It gates on HIGH/CRITICAL findings, meaning a critical vulnerability blocks the production deploy.
 
+## Zero-Trust Deployment
+
+The deployment pipeline itself doesn't store any credentials. GitHub Actions authenticates to Azure through OIDC federation — short-lived tokens, no service principal secrets in GitHub, no `AZURE_CLIENT_SECRET` sitting in a secrets store.
+
+Runtime secrets (database URLs, Redis connection strings, CSRF secrets) live in Azure Key Vault. The deploy workflow fetches them at deploy time and masks them in logs using GitHub's `::add-mask::` directive. They never appear in workflow output.
+
+The deploy also gates on health checks — both the backend (`/health/ready`) and frontend (`/health`) must return HTTP 200 before staging is considered healthy.
+
 ## The Part I Didn't Expect: What Broke in the Real World
 
 I tested the full system end-to-end against a live Azure environment. The automated tests weren't the interesting part. The interesting part was what broke when the pipeline met real infrastructure.
@@ -38,13 +46,15 @@ I tested the full system end-to-end against a live Azure environment. The automa
 
 Every single one of these bugs was invisible until the system ran against real Azure APIs with real infrastructure. If I had only relied on mocked tests, I would have shipped this thinking it was clean. "It works on my machine" has never been a testing strategy.
 
-## Zero-Trust Deployment
+## What I Didn't Build
 
-The deployment pipeline itself doesn't store any credentials. GitHub Actions authenticates to Azure through OIDC federation — short-lived tokens, no service principal secrets in GitHub, no `AZURE_CLIENT_SECRET` sitting in a secrets store.
+This section might be the most important part of the whole project. Understanding the boundaries of what you've built is part of the governance exercise.
 
-Runtime secrets (database URLs, Redis connection strings, CSRF secrets) live in Azure Key Vault. The deploy workflow fetches them at deploy time and masks them in logs using GitHub's `::add-mask::` directive. They never appear in workflow output.
+**No production environment.** The pipeline deploys to a live staging environment, but the production environment is deferred. The architecture is designed for it, but I didn't provision the duplicate resources to save costs.
 
-The deploy also gates on health checks — both the backend (`/health/ready`) and frontend (`/health`) must return HTTP 200 before staging is considered healthy.
+**No custom Semgrep rules.** I relied on the `--config auto` flag for Semgrep, which pulls from their community registry. A true enterprise deployment would include custom rules tailored to the organization's specific frameworks and internal APIs.
+
+**No third-party penetration testing.** The DAST scanner catches low-hanging fruit, but it doesn't replace a human penetration tester finding complex business logic flaws.
 
 ## What I Took Away From This
 
