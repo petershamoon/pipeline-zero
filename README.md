@@ -6,6 +6,8 @@ PipelineZero integrates 5 security scanners into GitHub Actions — each coverin
 
 ContractFlow (a contract lifecycle management app built with FastAPI and React 19) serves as the realistic workload. The security pipeline is the product.
 
+This project was built through **multi-agent orchestration**: Claude handled the application code and CI/CD workflows, while Manus owned the Azure infrastructure provisioning and operations.
+
 ---
 
 ## Security Pipeline Architecture
@@ -102,7 +104,7 @@ The application layer implements its own security controls independent of the pi
 
 ## Infrastructure as Code
 
-All Azure resources are defined in Terraform with Checkov compliance:
+All Azure resources are defined in Terraform with Checkov compliance. Due to staging environment constraints (Basic SKUs), 23 Checkov rules are explicitly skipped and documented.
 
 | Resource | Configuration |
 |----------|--------------|
@@ -132,8 +134,8 @@ All Azure resources are defined in Terraform with Checkov compliance:
 
 ```bash
 # Clone and start infrastructure
-git clone https://github.com/petershamoon/PipelineZero.git
-cd PipelineZero/contractflow
+git clone https://github.com/petershamoon/pipeline-zero.git
+cd pipeline-zero/contractflow
 docker compose up -d  # PostgreSQL, Redis, Azurite
 
 # Backend
@@ -165,7 +167,7 @@ The app is available at `http://localhost:3000` with the backend API at `http://
 ## Project Structure
 
 ```
-PipelineZero/
+pipeline-zero/
 ├── .github/
 │   ├── workflows/
 │   │   ├── ci.yml                    # Lint + test gate
