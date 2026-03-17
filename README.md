@@ -228,3 +228,4 @@ pipeline-zero/
 
 Portfolio demos use recorded real findings captured during normal development — scanner catches, before/after diffs, CI gate failures. No intentionally vulnerable code lives in this repository.
 
+
