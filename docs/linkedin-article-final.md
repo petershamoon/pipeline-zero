@@ -14,23 +14,52 @@ Here's what I learned.
 
 An early version of this pipeline had 8 scanners. That's what happens when you pick tools from a checklist instead of thinking about coverage gaps. Bandit does Python SAST — but Semgrep already covers that and more. Gitleaks does secret scanning — but Trivy already scans for secrets as part of its filesystem sweep. pip-audit checks Python dependency CVEs — but Trivy's vulnerability scanner already pulls from the same advisory databases.
 
-Three tools doing work that was already covered. Removing them wasn't about having fewer tools — it was about having the right tools. Each of the 5 remaining scanners covers a surface that no other tool in the pipeline touches:
+Three tools doing work that was already covered. Removing them wasn't about having fewer tools — it was about having the right tools. Each of the 5 remaining scanners covers a surface that no other tool in the pipeline touches.
 
-1. **Semgrep**: Pattern-based SAST scanning the full repo for application vulnerability patterns (injection flaws, auth bypasses, insecure crypto).
-2. **CodeQL**: Semantic SAST running GitHub's semantic analysis with a matrix build for both Python and JavaScript/TypeScript. This does real dataflow analysis and taint tracking.
-3. **Trivy**: Supply chain, secrets, and misconfigurations. A full filesystem scan for dependency CVEs, leaked secrets, and misconfigurations at HIGH/CRITICAL severity.
-4. **Checkov**: Infrastructure as Code compliance. Validates all Terraform code against security compliance rules (encryption, access controls, logging, network exposure).
-5. **Nuclei**: Dynamic Application Security Testing (DAST). Runs against the live staging URL to catch HTTP vulnerabilities, exposed endpoints, SSL issues, and misconfigurations.
+![GitHub Actions Workflows](screenshots/demo/06-github-actions-all-workflows-20260315.png)
 
-If any of the first four scanners fail, the PR cannot merge. The fifth scanner, Nuclei, runs as a pre-production gate. It gates on HIGH/CRITICAL findings, meaning a critical vulnerability blocks the production deploy.
+### Gate 1: Semgrep (Pattern-Based SAST)
+Semgrep runs on every pull request, scanning the full repository for application vulnerability patterns. It catches injection flaws, authentication bypasses, and insecure cryptography. Because it's pattern-based, it runs in seconds. If Semgrep finds a vulnerability, the PR cannot merge.
+
+### Gate 2: CodeQL (Semantic SAST)
+While Semgrep looks for patterns, CodeQL runs GitHub's semantic analysis with a matrix build for both Python and JavaScript/TypeScript. This does real dataflow analysis and taint tracking — following untrusted user input from the API router all the way down to the database query.
+
+### Gate 3: Trivy (Supply Chain & Secrets)
+Trivy handles the filesystem sweep. It scans the Dockerfiles, the `requirements.txt`, the `package.json`, and the raw code for dependency CVEs, leaked secrets, and misconfigurations. It's configured to fail the build only on HIGH or CRITICAL severity findings, preventing the pipeline from getting clogged with low-risk noise.
+
+### Gate 4: Checkov (Infrastructure as Code)
+Checkov validates all Terraform code against security compliance rules before it ever reaches Azure. It checks for encryption at rest, network exposure, logging configurations, and access controls. 
+
+![Checkov IaC Scanning](screenshots/demo/github-actions-all-workflows-overview-20260315.png)
+
+### Gate 5: Nuclei (DAST)
+The first four scanners run on the code. The fifth scanner runs on the deployed application. After the staging deployment succeeds, Nuclei runs a Dynamic Application Security Testing (DAST) scan against the live staging URL. It catches HTTP vulnerabilities, exposed endpoints, SSL issues, and misconfigurations that only exist at runtime. It gates on HIGH/CRITICAL findings, meaning a critical vulnerability blocks the production deploy.
+
+![Nuclei DAST Success](screenshots/demo/04-dast-nuclei-success-20260315.png)
 
 ## Zero-Trust Deployment
 
 The deployment pipeline itself doesn't store any credentials. GitHub Actions authenticates to Azure through OIDC federation — short-lived tokens, no service principal secrets in GitHub, no `AZURE_CLIENT_SECRET` sitting in a secrets store.
 
+![Entra OIDC Federation](screenshots/demo/02-entra-oidc-federated-credentials-20260315.webp)
+
 Runtime secrets (database URLs, Redis connection strings, CSRF secrets) live in Azure Key Vault. The deploy workflow fetches them at deploy time and masks them in logs using GitHub's `::add-mask::` directive. They never appear in workflow output.
 
 The deploy also gates on health checks — both the backend (`/health/ready`) and frontend (`/health`) must return HTTP 200 before staging is considered healthy.
+
+![API Health Check](screenshots/demo/09-api-health-check.webp)
+
+## Application Security: Defense in Depth
+
+The pipeline ensures the code is safe, but the application architecture itself implements defense in depth. I documented these decisions in 6 Architecture Decision Records (ADRs).
+
+**Cookie-Based Sessions (ADR-0004):** Browser auth state needs to be secure and resist XSS/CSRF attacks. Storing tokens in localStorage exposes them to script injection. The app uses HTTP-only, secure cookies with strict SameSite policies.
+
+**Distributed Rate Limiting (ADR-0005):** Multi-replica Container Apps deployment needs consistent rate limiting across instances. In-memory rate limiters are scoped to a single process. The app uses Redis to enforce global limits when the API scales horizontally.
+
+**File Upload Security (ADR-0006):** Contract file uploads must be validated server-side to prevent malicious file storage. Relying on file extensions alone is trivially spoofable. The app validates MIME types and uses short-lived SAS tokens for secure downloads.
+
+![Contract Detail View](screenshots/demo/04-contract-detail.webp)
 
 ## The Part I Didn't Expect: What Broke in the Real World
 
