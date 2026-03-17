@@ -6,13 +6,13 @@ Most teams bolt security on at the end. A penetration test before launch. A vuln
 
 I wanted to understand it deeply, and the best way I know how to learn something is to build with it. So I built a pipeline with 5 security tools - each covering a distinct attack surface with zero overlap - that gates every merge and every production deployment. Not a proof of concept in a notebook. A working pipeline gating a live Azure infrastructure deployment for a contract lifecycle management platform (FastAPI, React 19, Azure).
 
-I used two AI agents to help me build it: Claude handled the application code and CI/CD workflows, while Manus owned the Azure infrastructure provisioning and operations. I'm not going to pretend I hand-wrote every line of the 10,500+ lines of code. That's not the point. The point is understanding what the controls mean when you have to make them work in production, and that's the part no AI tool can shortcut for you.
+I used Claude for the application code and CI/CD workflows, and Manus for Azure infrastructure provisioning and operations. 10,500+ lines of code across the full stack.
 
 ## The Pipeline: 5 Tools, Zero Overlap
 
-The temptation is to throw every scanner you can find at the pipeline. But overlapping tools create noise, slow down builds, and give a false sense of thoroughness. Bandit does Python SAST - but Semgrep already covers that and more. Gitleaks does secret scanning - but Trivy already scans for secrets as part of its filesystem sweep. pip-audit checks Python dependency CVEs - but Trivy's vulnerability scanner already pulls from the same advisory databases.
+It's easy to throw every scanner you can find at the pipeline. But overlapping tools create noise, slow down builds, and give a false sense of thoroughness. Bandit does Python SAST - but Semgrep already covers that and more. Gitleaks does secret scanning - but Trivy already scans for secrets as part of its filesystem sweep. pip-audit checks Python dependency CVEs - but Trivy's vulnerability scanner already pulls from the same advisory databases.
 
-The goal isn't more tools. It's the right tools. Each of the 5 scanners in this pipeline covers a surface that no other tool in the pipeline touches.
+Each of the 5 scanners in this pipeline covers a surface that no other tool in the pipeline touches.
 
 > **[INSERT SCREENSHOT: `06-github-actions-all-workflows-20260315.png`]**
 > *All 4 GitHub Actions workflows - security-gate, deploy-staging, dast-gate, and CodeQL - shown in the Actions tab.*
@@ -116,7 +116,7 @@ I tested the full system end-to-end against a live Azure environment. The automa
 
 **Asyncpg SSL handling.** The async SQLAlchemy engine crashed because it doesn't accept the sslmode=require query parameter in the connection string. I had to strip it from the URL and pass connect_args={"ssl": True} instead. A tiny detail that completely broke the staging deployment until fixed.
 
-Every single one of these bugs was invisible until the system ran against real Azure APIs with real infrastructure. If I had only relied on mocked tests, I would have shipped this thinking it was clean. "It works on my machine" has never been a testing strategy.
+None of these bugs showed up until the system ran against real Azure APIs with real infrastructure. If I had only relied on mocked tests, I would have shipped this thinking it was clean. "It works on my machine" has never been a testing strategy.
 
 ## What I Didn't Build
 
@@ -129,8 +129,6 @@ No third-party penetration testing. The DAST scanner catches low-hanging fruit, 
 Understanding the boundaries of what you've built is part of the governance exercise.
 
 ## What I Took Away From This
-
-Fewer tools, better coverage. Overlapping scanners create noise, slow down pipelines, and give a false sense of thoroughness. Five tools with distinct coverage beats a bloated toolchain every time.
 
 Getting scanners to run is easy. Getting them to run without generating so much noise that people ignore them is the actual engineering challenge. Severity thresholds, scan scope restrictions, and skip lists with documented justifications - that's what makes a security pipeline usable instead of just technically correct.
 
