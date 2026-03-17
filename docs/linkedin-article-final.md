@@ -16,7 +16,9 @@ An early version of this pipeline had 8 scanners. That's what happens when you p
 
 Three tools doing work that was already covered. Removing them wasn't about having fewer tools — it was about having the right tools. Each of the 5 remaining scanners covers a surface that no other tool in the pipeline touches.
 
-![GitHub Actions Workflows](screenshots/demo/06-github-actions-all-workflows-20260315.png)
+> **[INSERT SCREENSHOT: `06-github-actions-all-workflows-20260315.png`]**
+> *All 4 GitHub Actions workflows — security-gate, deploy-staging, dast-gate, and CodeQL — shown in the Actions tab.*
+> Location: `contractflow/docs/portfolio/findings/screenshots/06-github-actions-all-workflows-20260315.png`
 
 ### Gate 1: Semgrep (Pattern-Based SAST)
 Semgrep runs on every pull request, scanning the full repository for application vulnerability patterns. It catches injection flaws, authentication bypasses, and insecure cryptography. Because it's pattern-based, it runs in seconds. If Semgrep finds a vulnerability, the PR cannot merge.
@@ -28,38 +30,96 @@ While Semgrep looks for patterns, CodeQL runs GitHub's semantic analysis with a 
 Trivy handles the filesystem sweep. It scans the Dockerfiles, the `requirements.txt`, the `package.json`, and the raw code for dependency CVEs, leaked secrets, and misconfigurations. It's configured to fail the build only on HIGH or CRITICAL severity findings, preventing the pipeline from getting clogged with low-risk noise.
 
 ### Gate 4: Checkov (Infrastructure as Code)
-Checkov validates all Terraform code against security compliance rules before it ever reaches Azure. It checks for encryption at rest, network exposure, logging configurations, and access controls. 
+Checkov validates all Terraform code against security compliance rules before it ever reaches Azure. It checks for encryption at rest, network exposure, logging configurations, and access controls.
 
-![Checkov IaC Scanning](screenshots/demo/github-actions-all-workflows-overview-20260315.png)
+> **[INSERT SCREENSHOT: `github-actions-all-workflows-overview-20260315.png`]**
+> *Workflow runs overview showing security-gate and deploy-staging passing on main branch pushes.*
+> Location: `contractflow/docs/portfolio/findings/screenshots/github-actions-all-workflows-overview-20260315.png`
 
 ### Gate 5: Nuclei (DAST)
 The first four scanners run on the code. The fifth scanner runs on the deployed application. After the staging deployment succeeds, Nuclei runs a Dynamic Application Security Testing (DAST) scan against the live staging URL. It catches HTTP vulnerabilities, exposed endpoints, SSL issues, and misconfigurations that only exist at runtime. It gates on HIGH/CRITICAL findings, meaning a critical vulnerability blocks the production deploy.
 
-![Nuclei DAST Success](screenshots/demo/04-dast-nuclei-success-20260315.png)
+> **[INSERT SCREENSHOT: `04-dast-nuclei-success-20260315.png`]**
+> *Nuclei DAST scan completing with 0 high/critical findings — DAST gate PASSED.*
+> Location: `contractflow/docs/portfolio/findings/screenshots/04-dast-nuclei-success-20260315.png`
+
+> **[INSERT SCREENSHOT: `github-dast-nuclei-job-steps-all-green-20260315.png`]**
+> *All DAST job steps green — install, template update, scan, gate evaluation, artifact upload.*
+> Location: `contractflow/docs/portfolio/findings/screenshots/github-dast-nuclei-job-steps-all-green-20260315.png`
 
 ## Zero-Trust Deployment
 
 The deployment pipeline itself doesn't store any credentials. GitHub Actions authenticates to Azure through OIDC federation — short-lived tokens, no service principal secrets in GitHub, no `AZURE_CLIENT_SECRET` sitting in a secrets store.
 
-![Entra OIDC Federation](screenshots/demo/02-entra-oidc-federated-credentials-20260315.webp)
+> **[INSERT SCREENSHOT: `02-entra-oidc-federated-credentials-20260315.webp`]**
+> *Entra ID federated credentials configuration — GitHub Actions OIDC trust for the main branch.*
+> Location: `contractflow/docs/portfolio/findings/screenshots/02-entra-oidc-federated-credentials-20260315.webp`
+
+> **[INSERT SCREENSHOT: `2026-03-14-entra-app-roles-configured.webp`]**
+> *Entra app roles configured — Super Admin, Approver, Contributor, Viewer mapped to RBAC.*
+> Location: `contractflow/docs/portfolio/findings/screenshots/2026-03-14-entra-app-roles-configured.webp`
 
 Runtime secrets (database URLs, Redis connection strings, CSRF secrets) live in Azure Key Vault. The deploy workflow fetches them at deploy time and masks them in logs using GitHub's `::add-mask::` directive. They never appear in workflow output.
 
+> **[INSERT SCREENSHOT: `github-staging-environment-secrets-8-20260315.png`]**
+> *GitHub staging environment with 8 secrets — all injected from Key Vault, none hardcoded.*
+> Location: `contractflow/docs/portfolio/findings/screenshots/github-staging-environment-secrets-8-20260315.png`
+
 The deploy also gates on health checks — both the backend (`/health/ready`) and frontend (`/health`) must return HTTP 200 before staging is considered healthy.
 
-![API Health Check](screenshots/demo/09-api-health-check.webp)
+> **[INSERT SCREENSHOT: `github-deploy-staging-run10-job-steps-all-green-20260315.png`]**
+> *Deploy-staging workflow run — all steps green including OIDC login, Key Vault fetch, Docker build/push, container update, and health checks.*
+> Location: `contractflow/docs/portfolio/findings/screenshots/github-deploy-staging-run10-job-steps-all-green-20260315.png`
+
+## The Application: ContractFlow
+
+The security pipeline gates a real application — ContractFlow, a contract lifecycle management platform. FastAPI backend, React 19 frontend, PostgreSQL, Redis, Azure Blob Storage. 25+ API endpoints across 6 resource groups (auth, contracts, versions, approvals, audit, admin).
+
+> **[INSERT SCREENSHOT: `01-login-page.webp`]**
+> *ContractFlow login page — local auth for development, Entra ID for production.*
+> Location: `docs/screenshots/demo/01-login-page.webp`
+
+> **[INSERT SCREENSHOT: `02-dashboard.webp`]**
+> *Dashboard showing 12 contracts across 5 status categories.*
+> Location: `docs/screenshots/demo/02-dashboard.webp`
+
+> **[INSERT SCREENSHOT: `03-contracts-list.webp`]**
+> *Contracts list with status badges, values, pagination — sortable by any column.*
+> Location: `docs/screenshots/demo/03-contracts-list.webp`
+
+> **[INSERT SCREENSHOT: `04-contract-detail.webp`]**
+> *Contract detail view — Azure Enterprise Agreement ($245K) with version history and approval chains.*
+> Location: `docs/screenshots/demo/04-contract-detail.webp`
+
+> **[INSERT SCREENSHOT: `07-admin-audit-log.webp`]**
+> *Audit log showing every action — login, create, approve, status_change, upload — with actor IDs and timestamps.*
+> Location: `docs/screenshots/demo/07-admin-audit-log.webp`
+
+> **[INSERT SCREENSHOT: `10-api-swagger-docs.webp`]**
+> *Swagger UI showing all 25+ API endpoints across health, auth, contracts, versions, approvals, audit, and admin.*
+> Location: `docs/screenshots/demo/10-api-swagger-docs.webp`
 
 ## Application Security: Defense in Depth
 
 The pipeline ensures the code is safe, but the application architecture itself implements defense in depth. I documented these decisions in 6 Architecture Decision Records (ADRs).
 
-**Cookie-Based Sessions (ADR-0004):** Browser auth state needs to be secure and resist XSS/CSRF attacks. Storing tokens in localStorage exposes them to script injection. The app uses HTTP-only, secure cookies with strict SameSite policies.
+**Cookie-Based Sessions (ADR-0004):** Browser auth state needs to be secure and resist XSS/CSRF attacks. Storing tokens in localStorage exposes them to script injection. The app uses HTTP-only, secure cookies with strict SameSite policies. Sessions are hashed server-side, rotated on every request, and paired with double-submit CSRF tokens.
 
 **Distributed Rate Limiting (ADR-0005):** Multi-replica Container Apps deployment needs consistent rate limiting across instances. In-memory rate limiters are scoped to a single process. The app uses Redis to enforce global limits when the API scales horizontally.
 
-**File Upload Security (ADR-0006):** Contract file uploads must be validated server-side to prevent malicious file storage. Relying on file extensions alone is trivially spoofable. The app validates MIME types and uses short-lived SAS tokens for secure downloads.
+**File Upload Security (ADR-0006):** Contract file uploads must be validated server-side to prevent malicious file storage. Relying on file extensions alone is trivially spoofable. The app validates MIME types, enforces a 50MB size limit, and uses short-lived HMAC-signed SAS tokens for secure downloads.
 
-![Contract Detail View](screenshots/demo/04-contract-detail.webp)
+> **[INSERT SCREENSHOT: `06-admin-users.webp`]**
+> *RBAC user management — 4 users across Super Admin, Approver, Contributor, and Viewer roles, mapped to 4 departments.*
+> Location: `docs/screenshots/demo/06-admin-users.webp`
+
+## Azure Infrastructure
+
+The entire infrastructure is defined in Terraform — 26 resources across a single module.
+
+> **[INSERT SCREENSHOT: `01-azure-resource-group-20260315.png`]**
+> *Azure Portal resource group showing all provisioned resources — Container Apps, ACR, Key Vault, PostgreSQL, Redis, Storage, Log Analytics.*
+> Location: `contractflow/docs/portfolio/findings/screenshots/01-azure-resource-group-20260315.png`
 
 ## The Part I Didn't Expect: What Broke in the Real World
 
