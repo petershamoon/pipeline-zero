@@ -26,7 +26,9 @@ That gave me layered coverage across the code, the cloud setup, and the running 
 
 ## Architecture Overview
 
-> **[INSERT ARCHITECTURE DIAGRAM HERE]***Suggested diagram: GitHub → security gates → staging deploy on Azure → post-deploy validation → production promotion path. Include ContractFlow frontend/backend, Key Vault, PostgreSQL, Redis, Blob Storage, and Container Apps.*Location: `docs/screenshots/demo/[architecture-diagram-file]`
+> **[INSERT SCREENSHOT: `architecture-diagram.png`]**
+> *PipelineZero full architecture — PR trigger → 4 pre-merge security gates → OIDC zero-trust deployment → post-deploy DAST → Azure infrastructure (26 resources) → ContractFlow application stack.*
+> Location: `docs/screenshots/demo/architecture-diagram.png`
 
 ## Security Checks Built Into the Workflow
 
