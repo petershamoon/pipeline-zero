@@ -5,7 +5,7 @@
 --- MANAGED IDENTITY ---
 Name                  ClientId                              PrincipalId                           TenantId
 --------------------  ------------------------------------  ------------------------------------  ------------------------------------
-cf-stg-id-eastus2-01  9c7f4b22-5451-4f6d-9ea9-aa71681c56c3  cf95b968-6e7e-48ce-b8cc-d647f63b83d8  5d30251d-6d7e-4c8f-849f-90a5c29b3b16
+cf-stg-id-eastus2-01  <REDACTED-CLIENT-ID>  <REDACTED-PRINCIPAL-ID>  <REDACTED-TENANT-ID>
 
 --- ROLE ASSIGNMENTS (Key Vault) ---
 

@@ -9,7 +9,7 @@ cf-stg-kv-eastus2-01  https://cf-stg-kv-eastus2-01.vault.azure.net/  standard  S
 --- SECRETS (names only) ---
 ERROR: (Forbidden) Caller is not authorized to perform action on resource.
 If role assignments, deny assignments or role definitions were changed recently, please observe propagation time.
-Caller: appid=04b07795-8ddb-461a-bbee-02f9e1bf7b46;oid=6e7e3c1a-e377-4e8c-b238-584f248bf22c;iss=https://sts.windows.net/5d30251d-6d7e-4c8f-849f-90a5c29b3b16/
+Caller: appid=<REDACTED-APPID>;oid=<REDACTED-OID>;iss=https://sts.windows.net/<REDACTED-TENANT-ID>/
 Action: 'Microsoft.KeyVault/vaults/secrets/readMetadata/action'
 Resource: '/subscriptions/5a9c39a7-65a6-4e2d-9a2b-25d1ac08ff08/resourcegroups/cf-stg-rg-eastus2-01/providers/microsoft.keyvault/vaults/cf-stg-kv-eastus2-01'
 Assignment: (not found)
@@ -20,7 +20,7 @@ Vault: cf-stg-kv-eastus2-01;location=eastus2
 Code: Forbidden
 Message: Caller is not authorized to perform action on resource.
 If role assignments, deny assignments or role definitions were changed recently, please observe propagation time.
-Caller: appid=04b07795-8ddb-461a-bbee-02f9e1bf7b46;oid=6e7e3c1a-e377-4e8c-b238-584f248bf22c;iss=https://sts.windows.net/5d30251d-6d7e-4c8f-849f-90a5c29b3b16/
+Caller: appid=<REDACTED-APPID>;oid=<REDACTED-OID>;iss=https://sts.windows.net/<REDACTED-TENANT-ID>/
 Action: 'Microsoft.KeyVault/vaults/secrets/readMetadata/action'
 Resource: '/subscriptions/5a9c39a7-65a6-4e2d-9a2b-25d1ac08ff08/resourcegroups/cf-stg-rg-eastus2-01/providers/microsoft.keyvault/vaults/cf-stg-kv-eastus2-01'
 Assignment: (not found)

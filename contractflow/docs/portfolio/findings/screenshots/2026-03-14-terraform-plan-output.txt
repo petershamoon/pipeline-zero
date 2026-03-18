@@ -80,7 +80,7 @@ Terraform will perform the following actions:
                 }
               [32m+[0m[0m env {
                   [32m+[0m[0m name  = "ENTRA_TENANT_ID"
-                  [32m+[0m[0m value = "5d30251d-6d7e-4c8f-849f-90a5c29b3b16"
+                  [32m+[0m[0m value = "<REDACTED-TENANT-ID>"
                 }
               [32m+[0m[0m env {
                   [32m+[0m[0m name  = "ENTRA_CLIENT_ID"
@@ -415,7 +415,7 @@ Terraform will perform the following actions:
           [32m+[0m[0m "owner"               = "manus"
           [32m+[0m[0m "project"             = "contractflow"
         }
-      [32m+[0m[0m tenant_id                     = "5d30251d-6d7e-4c8f-849f-90a5c29b3b16"
+      [32m+[0m[0m tenant_id                     = "<REDACTED-TENANT-ID>"
       [32m+[0m[0m vault_uri                     = (known after apply)
       [32m+[0m[0m contact (known after apply)
       [32m+[0m[0m network_acls (known after apply)

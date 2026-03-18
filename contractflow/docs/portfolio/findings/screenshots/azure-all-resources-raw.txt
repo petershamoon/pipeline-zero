@@ -36,7 +36,7 @@ cf-stg-alert-redis-cpu        global
 
 === POSTGRES ===
 {
-  "fqdn": "cf-stg-pg-ncus-01.postgres.database.azure.com",
+  "fqdn": "<REDACTED-PG-FQDN>",
   "location": "North Central US",
   "name": "cf-stg-pg-ncus-01",
   "sku": "Standard_B1ms",
@@ -47,7 +47,7 @@ cf-stg-alert-redis-cpu        global
 === REDIS ===
 {
   "capacity": 0,
-  "hostName": "cf-stg-redis-eastus2-01.redis.cache.windows.net",
+  "hostName": "<REDACTED-REDIS-FQDN>",
   "name": "cf-stg-redis-eastus2-01",
   "port": 6380,
   "provisioningState": "Succeeded",
@@ -73,8 +73,8 @@ cf-stg-alert-redis-cpu        global
 
 === MANAGED IDENTITY ===
 {
-  "clientId": "9c7f4b22-5451-4f6d-9ea9-aa71681c56c3",
+  "clientId": "<REDACTED-CLIENT-ID>",
   "name": "cf-stg-id-eastus2-01",
-  "principalId": "cf95b968-6e7e-48ce-b8cc-d647f63b83d8",
-  "tenantId": "5d30251d-6d7e-4c8f-849f-90a5c29b3b16"
+  "principalId": "<REDACTED-PRINCIPAL-ID>",
+  "tenantId": "<REDACTED-TENANT-ID>"
 }

@@ -34,7 +34,7 @@
 **Outcome:** All core resources are live in Azure.
 - Backend FQDN: `cf-stg-api-eastus2-01.whitemeadow-b55bb89a.eastus2.azurecontainerapps.io`
 - Frontend FQDN: `cf-stg-web-eastus2-01.whitemeadow-b55bb89a.eastus2.azurecontainerapps.io`
-- PostgreSQL: `cf-stg-pg-ncus-01.postgres.database.azure.com`
+- PostgreSQL: `<REDACTED-PG-FQDN>`
 - Key Vault: `https://cf-stg-kv-eastus2-01.vault.azure.net/`
 - ACR: `cfstg01acr.azurecr.io`
 
@@ -173,8 +173,8 @@ All screenshots and evidence artifacts are located in `/contractflow/docs/portfo
 | ACR Login Server | `cfstg01acr.azurecr.io` |
 | Backend FQDN | `cf-stg-api-eastus2-01.whitemeadow-b55bb89a.eastus2.azurecontainerapps.io` |
 | Frontend FQDN | `cf-stg-web-eastus2-01.whitemeadow-b55bb89a.eastus2.azurecontainerapps.io` |
-| PostgreSQL FQDN | `cf-stg-pg-ncus-01.postgres.database.azure.com` |
-| Redis Hostname | `cf-stg-redis-eastus2-01.redis.cache.windows.net` |
+| PostgreSQL FQDN | `<REDACTED-PG-FQDN>` |
+| Redis Hostname | `<REDACTED-REDIS-FQDN>` |
 | Key Vault URI | `https://cf-stg-kv-eastus2-01.vault.azure.net/` |
 | Storage Endpoint | `https://cfstg01sa.blob.core.windows.net/` |
 

@@ -11,7 +11,7 @@
 | Category | Property | Value |
 |---|---|---|
 | **Subscription** | Subscription ID | `5a9c39a7-65a6-4e2d-9a2b-25d1ac08ff08` |
-| **Subscription** | Tenant ID | `5d30251d-6d7e-4c8f-849f-90a5c29b3b16` |
+| **Subscription** | Tenant ID | `<REDACTED-TENANT-ID>` |
 | **Subscription** | Region | `eastus2` |
 | **Entra App (Staging)** | Display Name | ContractFlow Staging |
 | **Entra App (Staging)** | Application (client) ID | `41c4eaf5-7b36-4b1a-9d17-8d35b9c5e2da` |

@@ -138,16 +138,16 @@ This document captures the story, evidence, and article-ready notes for the Pipe
 |---|---|
 | Resource Group | `cf-stg-rg-eastus2-01` |
 | Subscription ID | `5a9c39a7-65a6-4e2d-9a2b-25d1ac08ff08` |
-| Tenant ID | `5d30251d-6d7e-4c8f-849f-90a5c29b3b16` |
+| Tenant ID | `<REDACTED-TENANT-ID>` |
 | Backend FQDN | `cf-stg-api-eastus2-01.whitemeadow-b55bb89a.eastus2.azurecontainerapps.io` |
 | Frontend FQDN | `cf-stg-web-eastus2-01.whitemeadow-b55bb89a.eastus2.azurecontainerapps.io` |
-| PostgreSQL FQDN | `cf-stg-pg-ncus-01.postgres.database.azure.com` |
-| Redis Hostname | `cf-stg-redis-eastus2-01.redis.cache.windows.net` |
+| PostgreSQL FQDN | `<REDACTED-PG-FQDN>` |
+| Redis Hostname | `<REDACTED-REDIS-FQDN>` |
 | Key Vault URI | `https://cf-stg-kv-eastus2-01.vault.azure.net/` |
 | ACR Login Server | `cfstg01acr.azurecr.io` |
 | Storage Account | `cfstg01sa` |
 | Log Analytics | `cf-stg-log-eastus2-01` |
-| Managed Identity | `cf-stg-id-eastus2-01` (clientId: `9c7f4b22-5451-4f6d-9ea9-aa71681c56c3`) |
+| Managed Identity | `cf-stg-id-eastus2-01` (clientId: `<REDACTED-CLIENT-ID>`) |
 | OIDC App Client ID | `5a2dc89a-c874-4b53-ae0b-5f706f82ffe6` |
 | Backend Image | `cfstg01acr.azurecr.io/contractflow/backend:3751557479e4ccb232674289eac111212e6de042` |
 | Frontend Image | `cfstg01acr.azurecr.io/contractflow/frontend:3751557479e4ccb232674289eac111212e6de042` |

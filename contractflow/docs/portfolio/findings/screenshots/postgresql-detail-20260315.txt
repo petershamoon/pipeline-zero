@@ -4,7 +4,7 @@
 ================================================================
 Name               Fqdn                                           State    Version    Sku            Tier       Location          Storage
 -----------------  ---------------------------------------------  -------  ---------  -------------  ---------  ----------------  ---------
-cf-stg-pg-ncus-01  cf-stg-pg-ncus-01.postgres.database.azure.com  Ready    16         Standard_B1ms  Burstable  North Central US  32
+cf-stg-pg-ncus-01  <REDACTED-PG-FQDN>  Ready    16         Standard_B1ms  Burstable  North Central US  32
 
 --- DATABASES ---
 WARNING: The --database-name/-d argument has been deprecated and will be removed in next breaking change release(2.86.0) scheduled for May 2026.

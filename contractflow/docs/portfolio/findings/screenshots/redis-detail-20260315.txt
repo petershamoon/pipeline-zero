@@ -4,4 +4,4 @@
 ================================================================
 Name                     Hostname                                         Port    Sku    Capacity    State      Version
 -----------------------  -----------------------------------------------  ------  -----  ----------  ---------  ---------
-cf-stg-redis-eastus2-01  cf-stg-redis-eastus2-01.redis.cache.windows.net  6380    Basic  0           Succeeded  6.0
+cf-stg-redis-eastus2-01  <REDACTED-REDIS-FQDN>  6380    Basic  0           Succeeded  6.0
