@@ -8,6 +8,8 @@ ContractFlow (a contract lifecycle management app built with FastAPI and React 1
 
 This project was built through **multi-agent orchestration**: Claude handled the application code and CI/CD workflows, while Manus owned the Azure infrastructure provisioning and operations.
 
+**Read the full write-up:** [PipelineZero: What Shift-Left Security Looks Like](https://www.linkedin.com/pulse/pipelinezero-what-shift-left-security-looks-like-peter-shamoon-kpgqc)
+
 ---
 
 ## Security Pipeline Architecture
