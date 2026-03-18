@@ -1,139 +1,139 @@
-# PipelineZero: What Shift-Left Security Looks Like
+# PipelineZero: What Shift-Left Security Looks Like in Practice
 
-I keep hearing about "shift-left security," but the conversations always stay at the principle level: DevSecOps culture, developer enablement, continuous scanning. Important concepts, but none of it ever answered the question I actually cared about: what does this look like in code?
+I hear the phrase “shift-left security” a lot, but most of the time it stays at a high level. People talk about secure development, DevSecOps, and catching issues early, but I wanted to understand what that actually looks like when it’s built into a real workflow.
 
-Most teams bolt security on at the end. A penetration test before launch. A vulnerability scan after deployment. Maybe a compliance audit once a quarter. By that point, you're paying to fix things that could have been caught in a pull request. A SQL injection caught during code review is a five-minute fix. The same vulnerability found in production is an incident response, a patch, a deployment, a postmortem, and probably a conversation with legal.
+A lot of teams still deal with security later in the process. That might mean testing close to launch, scanning after deployment, or reviewing things once the application is already live. By then, even small issues can take much more time and effort to fix.
 
-I wanted to understand it deeply, and the best way I know how to learn something is to build with it. So I built a pipeline with 5 security tools - each covering a distinct attack surface with zero overlap - that gates every merge and every production deployment. Not a proof of concept in a notebook. A working pipeline gating a live Azure infrastructure deployment for a contract lifecycle management platform (FastAPI, React 19, Azure).
+So I built PipelineZero to see what a more proactive approach looked like in practice: a CI/CD pipeline with multiple security checks built directly into the development and deployment process for a live Azure-hosted application.
 
-I used Claude for the application code and CI/CD workflows, and Manus for Azure infrastructure provisioning and operations. 10,500+ lines of code across the full stack.
+This was not just a demo project sitting in a repository. I wanted something I could actually run, troubleshoot, improve, and learn from. 
 
-## The Pipeline: 5 Tools, Zero Overlap
+## What the Pipeline Does
 
-It's easy to throw every scanner you can find at the pipeline. But overlapping tools create noise, slow down builds, and give a false sense of thoroughness. Bandit does Python SAST - but Semgrep already covers that and more. Gitleaks does secret scanning - but Trivy already scans for secrets as part of its filesystem sweep. pip-audit checks Python dependency CVEs - but Trivy's vulnerability scanner already pulls from the same advisory databases.
+My goal was not to pile on as many tools as possible. I wanted each part of the pipeline to have a clear purpose. At a high level, the pipeline checks:
 
-Each of the 5 scanners in this pipeline covers a surface that no other tool in the pipeline touches.
+- application code for common security issues
 
-> **[INSERT SCREENSHOT: `06-github-actions-all-workflows-20260315.png`]**
-> *All 4 GitHub Actions workflows - security-gate, deploy-staging, dast-gate, and CodeQL - shown in the Actions tab.*
-> Location: `contractflow/docs/portfolio/findings/screenshots/06-github-actions-all-workflows-20260315.png`
+- dependencies and packages for known risk
+
+- infrastructure configuration before deployment
+
+- the live application after staging deployment
+
+- deployment health before anything moves forward
+
+That gave me layered coverage across the code, the cloud setup, and the running application itself.
+
+## Architecture Overview
+
+> **[INSERT ARCHITECTURE DIAGRAM HERE]***Suggested diagram: GitHub → security gates → staging deploy on Azure → post-deploy validation → production promotion path. Include ContractFlow frontend/backend, Key Vault, PostgreSQL, Redis, Blob Storage, and Container Apps.*Location: `docs/screenshots/demo/[architecture-diagram-file]`
+
+## Security Checks Built Into the Workflow
+
+I used five security tools in the pipeline, each focused on a different area. Some checks run during pull requests so issues can be caught before code is merged. Others run during deployment or after the application is live in staging.
 
 ### Gate 1: Semgrep (Pattern-Based SAST)
 
-Semgrep runs on every pull request, scanning the full repository for application vulnerability patterns. It catches injection flaws, authentication bypasses, and insecure cryptography. Because it's pattern-based, it runs in seconds. If Semgrep finds a vulnerability, the PR cannot merge.
+Semgrep runs on every pull request and scans the repository for common vulnerability patterns in the application code. It’s fast, which makes it a good fit for PR gating. It catches issues like injection risks, authentication mistakes, and unsafe crypto usage early enough that they can be fixed before they ever land in the main branch.
 
 ### Gate 2: CodeQL (Semantic SAST)
 
-While Semgrep looks for patterns, CodeQL runs GitHub's semantic analysis with a matrix build for both Python and JavaScript/TypeScript. This does real dataflow analysis and taint tracking - following untrusted user input from the API router all the way down to the database query.
+Where Semgrep is great at fast pattern matching, CodeQL goes deeper. I run GitHub’s CodeQL analysis for both Python and JavaScript/TypeScript so it can do semantic analysis and trace risky data flows through the codebase. That gives me another layer of confidence for cases where context matters more than pattern matching alone.
 
-> **[INSERT SCREENSHOT: `11-security-gate-all-green.webp`]**
-> *Security-gate workflow completing successfully with all 4 jobs green (sast-iac, trivy, codeql python, codeql js/ts).*
-> Location: `docs/screenshots/demo/11-security-gate-all-green.webp`
+> **[INSERT SCREENSHOT: ****`06-github-actions-all-workflows-20260315.png`****]***All 4 GitHub Actions workflows - security-gate, deploy-staging, dast-gate, and CodeQL - shown in the Actions tab.*Location: `contractflow/docs/portfolio/findings/screenshots/06-github-actions-all-workflows-20260315.png`
 
-### Gate 3: Trivy (Supply Chain & Secrets)
+> **[INSERT SCREENSHOT: ****`11-security-gate-all-green.webp`****]***Security-gate workflow completing successfully with all 4 jobs green (sast-iac, trivy, codeql python, codeql js/ts).*Location: `docs/screenshots/demo/11-security-gate-all-green.webp`
 
-Trivy handles the filesystem sweep. It scans the Dockerfiles, the requirements.txt, the package.json, and the raw code for dependency CVEs, leaked secrets, and misconfigurations. It's configured to fail the build only on HIGH or CRITICAL severity findings, preventing the pipeline from getting clogged with low-risk noise.
+### Gate 3: Trivy (Supply Chain and Secrets)
 
-> **[INSERT SCREENSHOT: `13-trivy-scan-output.webp`]**
-> *Trivy filesystem scan output showing vulnerability database updates and scan execution.*
-> Location: `docs/screenshots/demo/13-trivy-scan-output.webp`
+Trivy handles the filesystem and dependency side of things. It scans Dockerfiles, dependency manifests, and source files for CVEs, leaked secrets, and security misconfigurations. I configured it to fail only on HIGH and CRITICAL findings. That mattered a lot, because one of the fastest ways to get people to ignore security tooling is to drown them in low-risk noise.
+
+> **[INSERT SCREENSHOT: ****`13-trivy-scan-output.webp`****]***Trivy filesystem scan output showing vulnerability database updates and scan execution.*Location: `docs/screenshots/demo/13-trivy-scan-output.webp`
 
 ### Gate 4: Checkov (Infrastructure as Code)
 
-Checkov validates all Terraform code against security compliance rules before it ever reaches Azure. It checks for encryption at rest, network exposure, logging configurations, and access controls.
+Checkov validates the Terraform before anything gets near Azure. It checks for issues around encryption, network exposure, access controls, logging, and other cloud security concerns. That gave me a way to shift security left not just in the application code, but in the infrastructure layer too.
 
 ### Gate 5: Nuclei (DAST)
 
-The first four scanners run on the code. The fifth scanner runs on the deployed application. After the staging deployment succeeds, Nuclei runs a Dynamic Application Security Testing (DAST) scan against the live staging URL. It catches HTTP vulnerabilities, exposed endpoints, SSL issues, and misconfigurations that only exist at runtime. It gates on HIGH/CRITICAL findings, meaning a critical vulnerability blocks the production deploy.
+The first four scanners focus on code and infrastructure definitions. Nuclei runs after staging deploys and scans the live application itself. That matters because some issues only show up once the app is actually running. Runtime behavior, exposed endpoints, HTTP misconfigurations, and SSL-related issues don’t always appear in static analysis. For this gate, I used HIGH/CRITICAL severity thresholds so a serious finding blocks production deployment.
 
-> **[INSERT SCREENSHOT: `04-dast-nuclei-success-20260315.png`]**
-> *Nuclei DAST scan completing with 0 high/critical findings - DAST gate PASSED.*
-> Location: `contractflow/docs/portfolio/findings/screenshots/04-dast-nuclei-success-20260315.png`
+> **[INSERT SCREENSHOT: ****`04-dast-nuclei-success-20260315.png`****]***Nuclei DAST scan completing with 0 high/critical findings - DAST gate PASSED.*Location: `contractflow/docs/portfolio/findings/screenshots/04-dast-nuclei-success-20260315.png`
 
-> **[INSERT SCREENSHOT: `github-dast-nuclei-job-steps-all-green-20260315.png`]**
-> *All DAST job steps green - install, template update, scan, gate evaluation, artifact upload.*
-> Location: `contractflow/docs/portfolio/findings/screenshots/github-dast-nuclei-job-steps-all-green-20260315.png`
+> **[INSERT SCREENSHOT: ****`github-dast-nuclei-job-steps-all-green-20260315.png`****]***All DAST job steps green - install, template update, scan, gate evaluation, artifact upload.*Location: `contractflow/docs/portfolio/findings/screenshots/github-dast-nuclei-job-steps-all-green-20260315.png`
 
-## Zero-Trust Deployment
+## Secure Deployment Approach
 
-The deployment pipeline itself doesn't store any credentials. GitHub Actions authenticates to Azure through OIDC federation - short-lived tokens, no service principal secrets in GitHub, no AZURE_CLIENT_SECRET sitting in a secrets store.
+I also wanted the deployment model itself to follow better security practices.
 
-> **[INSERT SCREENSHOT: `02-entra-oidc-federated-credentials-20260315.webp`]**
-> *Entra ID federated credentials configuration - GitHub Actions OIDC trust for the main branch.*
-> Location: `contractflow/docs/portfolio/findings/screenshots/02-entra-oidc-federated-credentials-20260315.webp`
+GitHub Actions authenticates to Azure using OIDC federation, so there are no long-lived cloud credentials stored in GitHub. No service principal secret sitting in a repo or secrets store. Just short-lived federated authentication for the workflow.
 
-Runtime secrets (database URLs, Redis connection strings, CSRF secrets) live in Azure Key Vault. The deploy workflow fetches them at deploy time and masks them in logs using GitHub's ::add-mask:: directive. They never appear in workflow output.
+> **[INSERT SCREENSHOT: ****`02-entra-oidc-federated-credentials-20260315.webp`****]***Entra ID federated credentials configuration - GitHub Actions OIDC trust for the main branch.*Location: `contractflow/docs/portfolio/findings/screenshots/02-entra-oidc-federated-credentials-20260315.webp`
 
-> **[INSERT SCREENSHOT: `github-staging-environment-secrets-8-20260315.png`]**
-> *GitHub staging environment with 8 secrets - all injected from Key Vault, none hardcoded.*
-> Location: `contractflow/docs/portfolio/findings/screenshots/github-staging-environment-secrets-8-20260315.png`
+Runtime secrets like database URLs, Redis connection strings, and CSRF secrets live in Azure Key Vault. The deploy workflow retrieves them at deploy time and masks them in logs.
 
-The deploy also gates on health checks - both the backend (/health/ready) and frontend (/health) must return HTTP 200 before staging is considered healthy.
+The deployment also includes health checks. Both the backend and frontend have to return HTTP 200 before staging is considered healthy.
 
-> **[INSERT SCREENSHOT: `github-deploy-staging-run10-job-steps-all-green-20260315.png`]**
-> *Deploy-staging workflow run - all steps green including OIDC login, Key Vault fetch, Docker build/push, container update, and health checks.*
-> Location: `contractflow/docs/portfolio/findings/screenshots/github-deploy-staging-run10-job-steps-all-green-20260315.png`
+> **[INSERT SCREENSHOT: ****`github-staging-environment-secrets-8-20260315.png`****]***GitHub staging environment with 8 secrets - all injected from Key Vault, none hardcoded.*Location: `contractflow/docs/portfolio/findings/screenshots/github-staging-environment-secrets-8-20260315.png`
+
+> **[INSERT SCREENSHOT: ****`github-deploy-staging-run10-job-steps-all-green-20260315.png`****]***Deploy-staging workflow run - all steps green including OIDC login, Key Vault fetch, Docker build/push, container update, and health checks.*Location: `contractflow/docs/portfolio/findings/screenshots/github-deploy-staging-run10-job-steps-all-green-20260315.png`
 
 ## The Application: ContractFlow
 
-The security pipeline gates a real application - ContractFlow, a contract lifecycle management platform. FastAPI backend, React 19 frontend, PostgreSQL, Redis, Azure Blob Storage. 25+ API endpoints across 6 resource groups (auth, contracts, versions, approvals, audit, admin).
+This pipeline gates a real application I built called ContractFlow, a contract lifecycle management platform. The stack is FastAPI on the backend, React 19 on the frontend, with PostgreSQL, Redis, Azure Blob Storage, and Azure Container Apps. It includes 25+ API endpoints across areas like auth, contracts, versioning, approvals, audit, and admin.
 
-> **[INSERT SCREENSHOT: `02-dashboard.webp`]**
-> *Dashboard showing 12 contracts across 5 status categories.*
-> Location: `docs/screenshots/demo/02-dashboard.webp`
+I wanted the security work to be attached to something real, not just a set of disconnected scanning jobs.
 
-> **[INSERT SCREENSHOT: `10-api-swagger-docs.webp`]**
-> *Swagger UI showing all 25+ API endpoints across health, auth, contracts, versions, approvals, audit, and admin.*
-> Location: `docs/screenshots/demo/10-api-swagger-docs.webp`
+> **[INSERT SCREENSHOT: ****`02-dashboard.webp`****]***Dashboard showing 12 contracts across 5 status categories.*Location: `docs/screenshots/demo/02-dashboard.webp`
+
+> **[INSERT SCREENSHOT: ****`10-api-swagger-docs.webp`****]***Swagger UI showing all 25+ API endpoints across health, auth, contracts, versions, approvals, audit, and admin.*Location: `docs/screenshots/demo/10-api-swagger-docs.webp`
 
 ## Application Security: Defense in Depth
 
-The pipeline ensures the code is safe, but the application architecture itself implements defense in depth. I documented these decisions in 6 Architecture Decision Records (ADRs).
+The pipeline is one layer, but I also wanted the application architecture itself to reflect secure design choices. I documented those decisions in six Architecture Decision Records.
 
-The browser auth decision came down to XSS resistance. Storing tokens in localStorage exposes them to script injection, so the app uses HTTP-only, secure cookies with strict SameSite policies. Sessions are hashed server-side, rotated on every request, and paired with double-submit CSRF tokens.
+For authentication, I chose HTTP-only secure cookies instead of storing tokens in localStorage, mainly for better resistance to XSS-related token theft. Sessions are hashed server-side, rotated regularly, and paired with double-submit CSRF protection.
 
-Rate limiting had to be distributed. In-memory rate limiters are scoped to a single process, which breaks the moment you scale horizontally on Azure Container Apps. Redis enforces global limits across replicas.
+Rate limiting had to be designed for distributed infrastructure. In-memory rate limiters fall apart once you scale horizontally, so Redis enforces limits across replicas.
 
-For file uploads, the app validates MIME types server-side, enforces a 50MB size limit, and generates short-lived HMAC-signed SAS tokens for secure downloads - because relying on file extensions alone is trivially spoofable.
+For file handling, the application validates MIME types server-side, enforces a 50 MB upload limit, and uses short-lived HMAC-signed SAS tokens for downloads instead of trusting file extensions or exposing storage directly.
 
 ## Azure Infrastructure
 
-The entire infrastructure is defined in Terraform - 26 resources across a single module.
+The infrastructure is fully defined in Terraform, with 26 Azure resources provisioned through code. That includes the application hosting, container registry, secrets management, database, cache, storage, and monitoring components needed to support the staging environment.
 
-> **[INSERT SCREENSHOT: `01-azure-resource-group-20260315.png`]**
-> *Azure Portal resource group showing all provisioned resources - Container Apps, ACR, Key Vault, PostgreSQL, Redis, Storage, Log Analytics.*
-> Location: `contractflow/docs/portfolio/findings/screenshots/01-azure-resource-group-20260315.png`
+> **[INSERT SCREENSHOT: ****`01-azure-resource-group-20260315.png`****]***Azure Portal resource group showing all provisioned resources - Container Apps, ACR, Key Vault, PostgreSQL, Redis, Storage, Log Analytics.*Location: `contractflow/docs/portfolio/findings/screenshots/01-azure-resource-group-20260315.png`
 
-## The Part I Didn't Expect: What Broke in the Real World
+## What Taught Me the Most: What Broke in the Real World
 
-I tested the full system end-to-end against a live Azure environment. The automated tests weren't the interesting part. The interesting part was what broke when the pipeline met real infrastructure.
+The most valuable part of the project was not just getting scans to pass. It was seeing what happened when the pipeline met real infrastructure, real deployment constraints, and real troubleshooting.
 
-**ZAP has a Docker permission bug.** I started with OWASP ZAP for DAST. The zaproxy:stable image has a known PermissionError on /zap/wrk/zap.yaml that's been open for months. I spent hours trying to chmod 777 the workspace before realizing the tool itself was the blocker. I switched to Nuclei - it was faster, more reliable, and the template system was excellent for targeting specific vulnerability classes.
+**OWASP ZAP turned into a dead end.** I originally started with ZAP for DAST, but the `zaproxy:stable` image ran into a Docker permission issue on `/zap/wrk/zap.yaml`. After spending too much time trying to work around it, I replaced it with Nuclei. That ended up being the right call for this project — faster, more reliable, and easier to tune.
 
-**Checkov skip lists are real.** When your staging environment uses Azure's Basic-tier SKUs (because you're not spending production money on a portfolio project), you'll have legitimate policy skips. ACR vulnerability scanning requires Premium. Geo-redundant Postgres backups aren't available on B1ms. I ended up with 23 explicitly documented Checkov skip rules. I documented every skip with the exact reason - the skip list became its own form of security documentation.
+**Checkov skip lists turned out to be part of the documentation.** Because I was working with lower-cost Azure SKUs in staging, some policy failures were legitimate exceptions rather than mistakes. ACR vulnerability scanning needs Premium. Some PostgreSQL backup options weren’t available on the SKU I was using. I ended up with 23 documented Checkov skips, each with a reason. That skip list became part of the security story rather than something hidden away.
 
-**PostgreSQL Regional Quotas.** Azure student/trial subscriptions have strict regional quotas for PostgreSQL Flexible Server. eastus2 was blocked. The database had to be successfully provisioned in northcentralus as a documented exception, breaking my clean single-region architecture.
+**Azure regional quotas forced an architecture exception.** On a student/trial subscription, PostgreSQL Flexible Server quotas blocked my preferred region. I had to provision the database in `northcentralus` instead of `eastus2`, which broke the cleaner single-region design I originally wanted.
 
-**Asyncpg SSL handling.** The async SQLAlchemy engine crashed because it doesn't accept the sslmode=require query parameter in the connection string. I had to strip it from the URL and pass connect_args={"ssl": True} instead. A tiny detail that completely broke the staging deployment until fixed.
+**Asyncpg SSL handling broke staging.** The async SQLAlchemy engine didn’t accept `sslmode=require` in the connection string the way I expected. The fix was to remove it from the URL and pass `connect_args={"ssl": True}` instead. Small detail, but it was enough to break the deployment until I tracked it down.
 
-None of these bugs showed up until the system ran against real Azure APIs with real infrastructure. If I had only relied on mocked tests, I would have shipped this thinking it was clean. "It works on my machine" has never been a testing strategy.
+None of those issues showed up in mocked testing. They only showed up once the system ran against real Azure APIs and real infrastructure. That was probably the clearest reminder in the whole project that “works on my machine” is not a security strategy.
 
-## What I Didn't Build
+## What I Did Not Try to Overstate
 
-No production environment. The pipeline deploys to a live staging environment, but the production environment is deferred. The architecture is designed for it, but I didn't provision the duplicate resources to save costs.
+I also wanted to be realistic about the boundaries of the project.
 
-No custom Semgrep rules. I relied on the --config auto flag for Semgrep, which pulls from their community registry. A true enterprise deployment would include custom rules tailored to the organization's specific frameworks and internal APIs.
+This project does not include a separate production environment yet. It deploys to a live staging environment, and the design supports future expansion, but I did not add extra complexity just to make the project sound bigger than it was.
 
-No third-party penetration testing. The DAST scanner catches low-hanging fruit, but it doesn't replace a human penetration tester finding complex business logic flaws.
+I also didn’t write custom Semgrep rules for the application. I used Semgrep’s auto configuration, which is a good baseline, but a mature enterprise implementation would usually include organization-specific rules.
 
-Understanding the boundaries of what you've built is part of the governance exercise.
+And while automated security checks are helpful, they are not a replacement for deeper human review. The pipeline improves coverage and catches issues earlier, but it does not pretend to solve everything.
 
-## What I Took Away From This
+## What I Took Away From It
 
-Getting scanners to run is easy. Getting them to run without generating so much noise that people ignore them is the actual engineering challenge. Severity thresholds, scan scope restrictions, and skip lists with documented justifications - that's what makes a security pipeline usable instead of just technically correct.
+The biggest lesson for me was simple:
 
-OIDC federation is worth the setup. No more rotating service principal secrets. No more "who has access to the GitHub secrets?" conversations. The federated credential just works, and you never have to think about credential rotation again.
+Getting security tools to run is the easy part. Getting them to be useful is the real work.
 
-The full repository is on GitHub: [github.com/petershamoon/pipeline-zero](https://github.com/petershamoon/pipeline-zero)
+The value came from putting checks in the right places, reducing noise, documenting exceptions clearly, and tying everything to a real deployment process. I also came away convinced that OIDC federation is worth the setup. Removing long-lived cloud credentials from CI/CD is one of those changes that improves security and reduces operational headache at the same time.
 
-If you're thinking about integrating security scanning into your CI/CD pipeline, the biggest lesson from this build is: start with the gate. If scanners run but never block anything, nobody pays attention. Make them required checks, document your skip lists honestly, and treat security findings with the same urgency as failing tests. That's what shift-left actually looked like once I got it working.
+The rest is in the repo: [github.com/petershamoon/pipeline-zero](https://github.com/petershamoon/pipeline-zero)
