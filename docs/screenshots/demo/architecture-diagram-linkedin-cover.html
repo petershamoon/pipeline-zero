@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PipelineZero — LinkedIn Cover</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #0a0e1a;
+    color: #e2e8f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 1080px;
+    width: 1920px;
+    overflow: hidden;
+  }
+
+  .cover {
+    width: 1920px;
+    height: 1080px;
+    padding: 52px 64px 44px 64px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    background: 
+      radial-gradient(ellipse at 20% 20%, rgba(37, 99, 235, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(124, 58, 237, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(8, 145, 178, 0.04) 0%, transparent 60%),
+      #0a0e1a;
+  }
+
+  /* ── Title ── */
+  .title-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .title-row h1 {
+    font-size: 38px;
+    font-weight: 800;
+    color: #f8fafc;
+    letter-spacing: -1px;
+  }
+
+  .title-row .subtitle {
+    font-size: 15px;
+    color: #64748b;
+    font-weight: 500;
+  }
+
+  .tagline {
+    font-size: 16px;
+    color: #94a3b8;
+    margin-bottom: 20px;
+    letter-spacing: 0.3px;
+  }
+
+  .tagline span {
+    color: #22d3ee;
+    font-weight: 600;
+  }
+
+  /* ── Section Labels ── */
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 16px 0 10px 0;
+  }
+
+  .section-label .line {
+    flex: 1;
+    height: 1px;
+    background: #1e293b;
+  }
+
+  .section-label .text {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+    color: #475569;
+    white-space: nowrap;
+  }
+
+  /* ── Flow Rows ── */
+  .flow-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 0;
+  }
+
+  /* ── Cards ── */
+  .card {
+    border-radius: 10px;
+    padding: 16px 20px;
+    position: relative;
+    text-align: center;
+  }
+
+  .card-label {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 4px;
+    opacity: 0.7;
+  }
+
+  .card-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #f1f5f9;
+  }
+
+  .card-detail {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 3px;
+    line-height: 1.4;
+  }
+
+  /* ── Card Variants ── */
+  .card.trigger {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid #334155;
+    min-width: 150px;
+  }
+
+  .card.gate {
+    background: linear-gradient(135deg, #0c1a2e 0%, #0a1628 100%);
+    border: 1px solid #1e3a5f;
+    min-width: 180px;
+    padding: 16px 18px;
+  }
+
+  .card.deploy {
+    background: linear-gradient(135deg, #172554 0%, #0c1a3d 100%);
+    border: 1px solid #1e40af;
+    min-width: 170px;
+  }
+
+  .card.dast {
+    background: linear-gradient(135deg, #1a0c0c 0%, #180a0a 100%);
+    border: 1px solid #991b1b;
+    min-width: 170px;
+  }
+
+  .card.result {
+    background: linear-gradient(135deg, #052e16 0%, #022c22 100%);
+    border: 1px solid #166534;
+    min-width: 170px;
+  }
+
+  .card.infra {
+    background: linear-gradient(135deg, #1a1030 0%, #0f0a20 100%);
+    border: 1px solid #5b21b6;
+    padding: 14px 12px;
+  }
+
+  .card.app {
+    background: linear-gradient(135deg, #1c1917 0%, #0c0a09 100%);
+    border: 1px solid #78350f;
+    min-width: 200px;
+  }
+
+  /* ── Arrows ── */
+  .arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #475569;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  /* ── Gate Status ── */
+  .gate-status {
+    display: inline-block;
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-top: 5px;
+  }
+
+  .gate-status.required {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+
+  .gate-status.pass {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+  }
+
+  /* ── OIDC Badge ── */
+  .oidc-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 9px;
+    font-weight: 600;
+    color: #22d3ee;
+    background: rgba(34, 211, 238, 0.08);
+    border: 1px solid rgba(34, 211, 238, 0.2);
+    border-radius: 5px;
+    padding: 3px 8px;
+    margin-top: 5px;
+  }
+
+  .oidc-badge .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #22d3ee;
+  }
+
+  /* ── Bottom Grid ── */
+  .bottom-section {
+    display: flex;
+    gap: 24px;
+    margin-top: 10px;
+  }
+
+  .bottom-left {
+    flex: 1;
+  }
+
+  .bottom-right {
+    flex: 1;
+  }
+
+  .infra-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .app-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #1e293b;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: #64748b;
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+  }
+
+  .legend-dot.sast { background: #1e3a5f; border: 1px solid #2563eb; }
+  .legend-dot.supply { background: #1e3a5f; border: 1px solid #0891b2; }
+  .legend-dot.iac { background: #1e3a5f; border: 1px solid #7c3aed; }
+  .legend-dot.dast-l { background: #1a0c0c; border: 1px solid #991b1b; }
+  .legend-dot.deploy-l { background: #172554; border: 1px solid #1e40af; }
+  .legend-dot.infra-l { background: #1a1030; border: 1px solid #5b21b6; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <!-- ── TITLE ── -->
+  <div class="title-row">
+    <h1>PipelineZero</h1>
+    <div class="subtitle">Security Pipeline Architecture</div>
+  </div>
+  <div class="tagline"><span>5 security gates</span> · zero-trust deployment · <span>zero stored credentials</span> · Azure Container Apps</div>
+
+  <!-- ── TRIGGER ── -->
+  <div class="section-label">
+    <div class="line"></div>
+    <div class="text">Trigger</div>
+    <div class="line"></div>
+  </div>
+
+  <div class="flow-row">
+    <div class="card trigger">
+      <div class="card-label">Developer</div>
+      <div class="card-name">Pull Request</div>
+      <div class="card-detail">Push to main or PR open</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="card trigger">
+      <div class="card-label">Platform</div>
+      <div class="card-name">GitHub Actions</div>
+      <div class="card-detail">4 workflows triggered</div>
+    </div>
+  </div>
+
+  <!-- ── SECURITY GATES ── -->
+  <div class="section-label">
+    <div class="line"></div>
+    <div class="text">Pre-Merge Security Gates — All Must Pass</div>
+    <div class="line"></div>
+  </div>
+
+  <div class="flow-row">
+    <div class="card gate" style="border-color: #2563eb;">
+      <div class="card-label" style="color: #60a5fa;">Gate 1 · SAST</div>
+      <div class="card-name">Semgrep</div>
+      <div class="card-detail">Pattern-based scanning<br>Injection, auth, crypto</div>
+      <div class="gate-status required">Required</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="card gate" style="border-color: #2563eb;">
+      <div class="card-label" style="color: #60a5fa;">Gate 2 · SAST</div>
+      <div class="card-name">CodeQL</div>
+      <div class="card-detail">Semantic analysis<br>Python + JS/TS matrix</div>
+      <div class="gate-status required">Required</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="card gate" style="border-color: #0891b2;">
+      <div class="card-label" style="color: #22d3ee;">Gate 3 · Supply Chain</div>
+      <div class="card-name">Trivy</div>
+      <div class="card-detail">CVEs, secrets, misconfig<br>HIGH/CRITICAL gate</div>
+      <div class="gate-status required">Required</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="card gate" style="border-color: #7c3aed;">
+      <div class="card-label" style="color: #a78bfa;">Gate 4 · IaC</div>
+      <div class="card-name">Checkov</div>
+      <div class="card-detail">Terraform validation<br>23 documented skips</div>
+      <div class="gate-status required">Required</div>
+    </div>
+  </div>
+
+  <!-- ── DEPLOYMENT ── -->
+  <div class="section-label">
+    <div class="line"></div>
+    <div class="text">Zero-Trust Deployment — OIDC Federation, No Stored Credentials</div>
+    <div class="line"></div>
+  </div>
+
+  <div class="flow-row">
+    <div class="card deploy">
+      <div class="card-label">Authentication</div>
+      <div class="card-name">OIDC → Azure</div>
+      <div class="card-detail">Federated identity · Short-lived tokens</div>
+      <div class="oidc-badge"><span class="dot"></span> No secrets in GitHub</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="card deploy">
+      <div class="card-label">Secrets</div>
+      <div class="card-name">Key Vault Fetch</div>
+      <div class="card-detail">9 secrets injected · Masked in logs</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="card deploy">
+      <div class="card-label">Build & Push</div>
+      <div class="card-name">Docker → ACR</div>
+      <div class="card-detail">Backend + Frontend images</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="card deploy">
+      <div class="card-label">Deploy</div>
+      <div class="card-name">Container Apps</div>
+      <div class="card-detail">Staging · Health check gates</div>
+    </div>
+  </div>
+
+  <!-- ── POST-DEPLOY ── -->
+  <div class="section-label">
+    <div class="line"></div>
+    <div class="text">Post-Deploy Validation</div>
+    <div class="line"></div>
+  </div>
+
+  <div class="flow-row">
+    <div class="card deploy" style="border-color: #166534;">
+      <div class="card-label" style="color: #4ade80;">Health Checks</div>
+      <div class="card-name">/health/ready</div>
+      <div class="card-detail">Backend + Frontend · HTTP 200</div>
+      <div class="gate-status pass">Passed</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="card dast">
+      <div class="card-label" style="color: #f87171;">Gate 5 · DAST</div>
+      <div class="card-name">Nuclei</div>
+      <div class="card-detail">Live scan · HTTP vulns, SSL, misconfig</div>
+      <div class="gate-status required">Required</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="card result">
+      <div class="card-label" style="color: #4ade80;">Result</div>
+      <div class="card-name">Staging Ready</div>
+      <div class="card-detail">All 5 gates passed</div>
+      <div class="gate-status pass">All Clear</div>
+    </div>
+  </div>
+
+  <!-- ── BOTTOM: INFRA + APP SIDE BY SIDE ── -->
+  <div class="bottom-section">
+    <div class="bottom-left">
+      <div class="section-label">
+        <div class="line"></div>
+        <div class="text">Azure Infrastructure — 26 Resources</div>
+        <div class="line"></div>
+      </div>
+      <div class="infra-grid">
+        <div class="card infra">
+          <div class="card-name" style="font-size: 11px;">Container Apps</div>
+          <div class="card-detail">Backend + Frontend</div>
+        </div>
+        <div class="card infra">
+          <div class="card-name" style="font-size: 11px;">ACR</div>
+          <div class="card-detail">Docker images</div>
+        </div>
+        <div class="card infra">
+          <div class="card-name" style="font-size: 11px;">Key Vault</div>
+          <div class="card-detail">Secrets</div>
+        </div>
+        <div class="card infra">
+          <div class="card-name" style="font-size: 11px;">PostgreSQL</div>
+          <div class="card-detail">Flexible Server</div>
+        </div>
+        <div class="card infra">
+          <div class="card-name" style="font-size: 11px;">Redis</div>
+          <div class="card-detail">Sessions + rate limits</div>
+        </div>
+        <div class="card infra">
+          <div class="card-name" style="font-size: 11px;">Blob Storage</div>
+          <div class="card-detail">File uploads</div>
+        </div>
+        <div class="card infra">
+          <div class="card-name" style="font-size: 11px;">Log Analytics</div>
+          <div class="card-detail">Monitoring</div>
+        </div>
+        <div class="card infra">
+          <div class="card-name" style="font-size: 11px;">Managed ID</div>
+          <div class="card-detail">RBAC assignments</div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-right">
+      <div class="section-label">
+        <div class="line"></div>
+        <div class="text">ContractFlow Application</div>
+        <div class="line"></div>
+      </div>
+      <div class="app-row">
+        <div class="card app">
+          <div class="card-label" style="color: #fbbf24;">Backend</div>
+          <div class="card-name">FastAPI</div>
+          <div class="card-detail">25+ endpoints · RBAC<br>CSRF · Rate limiting<br>Session rotation</div>
+        </div>
+        <div class="card app">
+          <div class="card-label" style="color: #fbbf24;">Frontend</div>
+          <div class="card-name">React 19</div>
+          <div class="card-detail">Contract lifecycle UI<br>Dashboard · Admin<br>HTTP-only cookies</div>
+        </div>
+        <div class="card app">
+          <div class="card-label" style="color: #fbbf24;">Governance</div>
+          <div class="card-name">6 ADRs</div>
+          <div class="card-detail">Sessions · CSRF<br>Rate limiting<br>File uploads</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LEGEND ── -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot sast"></div> SAST (Semgrep + CodeQL)</div>
+    <div class="legend-item"><div class="legend-dot supply"></div> Supply Chain (Trivy)</div>
+    <div class="legend-item"><div class="legend-dot iac"></div> IaC (Checkov)</div>
+    <div class="legend-item"><div class="legend-dot dast-l"></div> DAST (Nuclei)</div>
+    <div class="legend-item"><div class="legend-dot deploy-l"></div> Deployment</div>
+    <div class="legend-item"><div class="legend-dot infra-l"></div> Azure Infrastructure</div>
+  </div>
+</div>
+
+</body>
+</html>
