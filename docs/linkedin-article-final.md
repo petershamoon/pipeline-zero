@@ -42,15 +42,21 @@ Semgrep runs on every pull request and scans the repository for common vulnerabi
 
 Where Semgrep is great at fast pattern matching, CodeQL goes deeper. I run GitHub’s CodeQL analysis for both Python and JavaScript/TypeScript so it can do semantic analysis and trace risky data flows through the codebase. That gives me another layer of confidence for cases where context matters more than pattern matching alone.
 
-> **[INSERT SCREENSHOT: ****`06-github-actions-all-workflows-20260315.png`****]***All 4 GitHub Actions workflows - security-gate, deploy-staging, dast-gate, and CodeQL - shown in the Actions tab.*Location: `contractflow/docs/portfolio/findings/screenshots/06-github-actions-all-workflows-20260315.png`
+> **[INSERT SCREENSHOT: `06-github-actions-all-workflows-20260318.webp`]**
+> *All GitHub Actions workflows — security-gate, deploy-staging, dast-gate, CodeQL, ci-lint-test, branch-policy — 185 runs, all green.*
+> Location: `contractflow/docs/portfolio/findings/screenshots/06-github-actions-all-workflows-20260318.webp`
 
-> **[INSERT SCREENSHOT: ****`11-security-gate-all-green.webp`****]***Security-gate workflow completing successfully with all 4 jobs green (sast-iac, trivy, codeql python, codeql js/ts).*Location: `docs/screenshots/demo/11-security-gate-all-green.webp`
+> **[INSERT SCREENSHOT: `11-security-gate-all-green.webp`]**
+> *Security-gate workflow completing successfully with all 4 jobs green (sast-iac, trivy, codeql python, codeql js/ts).*
+> Location: `docs/screenshots/demo/11-security-gate-all-green.webp`
 
 ### Gate 3: Trivy (Supply Chain and Secrets)
 
 Trivy handles the filesystem and dependency side of things. It scans Dockerfiles, dependency manifests, and source files for CVEs, leaked secrets, and security misconfigurations. I configured it to fail only on HIGH and CRITICAL findings. That mattered a lot, because one of the fastest ways to get people to ignore security tooling is to drown them in low-risk noise.
 
-> **[INSERT SCREENSHOT: ****`13-trivy-scan-output.webp`****]***Trivy filesystem scan output showing vulnerability database updates and scan execution.*Location: `docs/screenshots/demo/13-trivy-scan-output.webp`
+> **[INSERT SCREENSHOT: `trivy-job-steps-all-green-20260318.webp`]**
+> *Trivy job — all steps green (checkout, FS scan, complete) in 11 seconds.*
+> Location: `contractflow/docs/portfolio/findings/screenshots/trivy-job-steps-all-green-20260318.webp`
 
 ### Gate 4: Checkov (Infrastructure as Code)
 
@@ -60,9 +66,13 @@ Checkov validates the Terraform before anything gets near Azure. It checks for i
 
 The first four scanners focus on code and infrastructure definitions. Nuclei runs after staging deploys and scans the live application itself. That matters because some issues only show up once the app is actually running. Runtime behavior, exposed endpoints, HTTP misconfigurations, and SSL-related issues don’t always appear in static analysis. For this gate, I used HIGH/CRITICAL severity thresholds so a serious finding blocks production deployment.
 
-> **[INSERT SCREENSHOT: ****`04-dast-nuclei-success-20260315.png`****]***Nuclei DAST scan completing with 0 high/critical findings - DAST gate PASSED.*Location: `contractflow/docs/portfolio/findings/screenshots/04-dast-nuclei-success-20260315.png`
+> **[INSERT SCREENSHOT: `04-dast-nuclei-success-20260318.webp`]**
+> *DAST run summary — Nuclei HTTP scan completed successfully.*
+> Location: `contractflow/docs/portfolio/findings/screenshots/04-dast-nuclei-success-20260318.webp`
 
-> **[INSERT SCREENSHOT: ****`github-dast-nuclei-job-steps-all-green-20260315.png`****]***All DAST job steps green - install, template update, scan, gate evaluation, artifact upload.*Location: `contractflow/docs/portfolio/findings/screenshots/github-dast-nuclei-job-steps-all-green-20260315.png`
+> **[INSERT SCREENSHOT: `dast-gate-passed-expanded-20260318.webp`]**
+> *DAST gate step expanded — "DAST gate PASSED: 0 HIGH/CRITICAL findings."*
+> Location: `contractflow/docs/portfolio/findings/screenshots/dast-gate-passed-expanded-20260318.webp`
 
 ## Secure Deployment Approach
 
@@ -70,15 +80,21 @@ I also wanted the deployment model itself to follow better security practices.
 
 GitHub Actions authenticates to Azure using OIDC federation, so there are no long-lived cloud credentials stored in GitHub. No service principal secret sitting in a repo or secrets store. Just short-lived federated authentication for the workflow.
 
-> **[INSERT SCREENSHOT: ****`02-entra-oidc-federated-credentials-20260315.webp`****]***Entra ID federated credentials configuration - GitHub Actions OIDC trust for the main branch.*Location: `contractflow/docs/portfolio/findings/screenshots/02-entra-oidc-federated-credentials-20260315.webp`
+> **[INSERT SCREENSHOT: `02-entra-oidc-federated-credentials-20260315.webp`]**
+> *Entra ID federated credentials configuration — GitHub Actions OIDC trust for the main branch.*
+> Location: `contractflow/docs/portfolio/findings/screenshots/02-entra-oidc-federated-credentials-20260315.webp`
 
 Runtime secrets like database URLs, Redis connection strings, and CSRF secrets live in Azure Key Vault. The deploy workflow retrieves them at deploy time and masks them in logs.
 
 The deployment also includes health checks. Both the backend and frontend have to return HTTP 200 before staging is considered healthy.
 
-> **[INSERT SCREENSHOT: ****`github-staging-environment-secrets-8-20260315.png`****]***GitHub staging environment with 8 secrets - all injected from Key Vault, none hardcoded.*Location: `contractflow/docs/portfolio/findings/screenshots/github-staging-environment-secrets-8-20260315.png`
+> **[INSERT SCREENSHOT: `github-staging-environment-secrets-20260318.webp`]**
+> *GitHub staging environment — 9 secrets (ACR_NAME, AZURE_CLIENT_ID, AZURE_SUBSCRIPTION_ID, AZURE_TENANT_ID, ENTRA_APP_CLIENT_ID, RESOURCE_GROUP, STAGING_BACKEND_APP, STAGING_BASE_URL, STAGING_FRONTEND_APP), all injected from Key Vault.*
+> Location: `contractflow/docs/portfolio/findings/screenshots/github-staging-environment-secrets-20260318.webp`
 
-> **[INSERT SCREENSHOT: ****`github-deploy-staging-run10-job-steps-all-green-20260315.png`****]***Deploy-staging workflow run - all steps green including OIDC login, Key Vault fetch, Docker build/push, container update, and health checks.*Location: `contractflow/docs/portfolio/findings/screenshots/github-deploy-staging-run10-job-steps-all-green-20260315.png`
+> **[INSERT SCREENSHOT: `deploy-staging-job-steps-all-green-20260318.webp`]**
+> *Deploy-staging workflow — all 12 steps green including OIDC login, Key Vault fetch, Docker build/push, ACR push, Container App update, and health checks.*
+> Location: `contractflow/docs/portfolio/findings/screenshots/deploy-staging-job-steps-all-green-20260318.webp`
 
 ## The Application: ContractFlow
 
@@ -86,9 +102,13 @@ This pipeline gates a real application I built called ContractFlow, a contract l
 
 I wanted the security work to be attached to something real, not just a set of disconnected scanning jobs.
 
-> **[INSERT SCREENSHOT: ****`02-dashboard.webp`****]***Dashboard showing 12 contracts across 5 status categories.*Location: `docs/screenshots/demo/02-dashboard.webp`
+> **[INSERT SCREENSHOT: `02-dashboard.webp`]**
+> *Dashboard showing 12 contracts across 5 status categories.*
+> Location: `docs/screenshots/demo/02-dashboard.webp`
 
-> **[INSERT SCREENSHOT: ****`10-api-swagger-docs.webp`****]***Swagger UI showing all 25+ API endpoints across health, auth, contracts, versions, approvals, audit, and admin.*Location: `docs/screenshots/demo/10-api-swagger-docs.webp`
+> **[INSERT SCREENSHOT: `10-api-swagger-docs.webp`]**
+> *Swagger UI showing all 25+ API endpoints across health, auth, contracts, versions, approvals, audit, and admin.*
+> Location: `docs/screenshots/demo/10-api-swagger-docs.webp`
 
 ## Application Security: Defense in Depth
 
@@ -104,7 +124,9 @@ For file handling, the application validates MIME types server-side, enforces a 
 
 The infrastructure is fully defined in Terraform, with 26 Azure resources provisioned through code. That includes the application hosting, container registry, secrets management, database, cache, storage, and monitoring components needed to support the staging environment.
 
-> **[INSERT SCREENSHOT: ****`01-azure-resource-group-20260315.png`****]***Azure Portal resource group showing all provisioned resources - Container Apps, ACR, Key Vault, PostgreSQL, Redis, Storage, Log Analytics.*Location: `contractflow/docs/portfolio/findings/screenshots/01-azure-resource-group-20260315.png`
+> **[INSERT SCREENSHOT: `01-azure-resource-group-20260315.png`]**
+> *Azure Portal resource group showing all provisioned resources — Container Apps, ACR, Key Vault, PostgreSQL, Redis, Storage, Log Analytics.*
+> Location: `contractflow/docs/portfolio/findings/screenshots/01-azure-resource-group-20260315.png`
 
 ## What Taught Me the Most: What Broke in the Real World
 
